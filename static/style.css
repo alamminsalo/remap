@@ -1,12 +1,18 @@
 
-.re-viewport {
+.remap-viewport {
   height: 100%;
-  display: block;
   position: relative;
   overflow: hidden;
+  border: 1px solid blue;
 }
 
-.re-tile {
-  display: inline;
-  position: absolute;
+.remap-viewport-inner {
+  position: relative;
+}
+
+.remap-tile-row {
+}
+
+.remap-tile {
+  vertical-align: middle;
 }

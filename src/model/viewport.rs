@@ -26,14 +26,23 @@ impl Viewport {
 
     // calculates pixel offset for tile
     pub fn pixel_offset(&self, tile: &Tile) -> (i32, i32) {
-        let res = 156543.03 * self.lat_max.cos() / 2f64.powi(self.z as i32);
-        let nw = (self.lon_min, self.lat_max);
-        let t_nw = tile.nw();
+        // let res = 156543.03 * self.lat_max.cos() / 2f64.powi(self.z as i32);
+        // dbg!(&res);
+        // let nw = (self.lon_min, self.lat_max);
+        // dbg!(&nw);
+        // let t_nw = tile.nw();
+        // let d_lon = (t_nw.0 - nw.0) * res;
+        // let d_lat = (t_nw.1 - nw.1) * res;
+        // dbg!(d_lon);
+        // dbg!(d_lat);
+        // (d_lon as i32, d_lat as i32)
 
-        (
-            ((nw.0 - t_nw.0) * res) as i32,
-            ((nw.1 - t_nw.1) * res) as i32,
-        )
+        // just use linear interpolation
+        let nw = tile.nw();
+        let se = tile.se();
+        let f_lon = (self.lon_min - nw.0) / (se.0 - nw.0);
+        let f_lat = (self.lat_max - nw.1) / (se.1 - nw.1);
+        ((f_lon * -256.0) as i32, (f_lat * -256.0) as i32)
     }
 }
 

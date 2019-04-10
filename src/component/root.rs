@@ -16,12 +16,13 @@ impl Component for Root {
 
     fn create(_: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         Root {
+            // 37,4423231496
             vw: Viewport {
-                lon_min: 29.59,
-                lon_max: 29.98,
-                lat_min: 62.56,
-                lat_max: 62.65,
-                z: 7,
+                lon_min: 29.71,
+                lon_max: 29.87539,
+                lat_min: 62.557,
+                lat_max: 62.631,
+                z: 12,
             },
         }
     }
