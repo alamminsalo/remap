@@ -1,5 +1,5 @@
 [package]
-name = "mappr"
+name = "remap"
 version = "0.1.0"
 authors = ["alamminsalo <antti.lamminsalo@protonmail.com>"]
 edition = "2018"

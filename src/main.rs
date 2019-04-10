@@ -1,4 +1,4 @@
-use mappr::component::Root;
+use remap::component::Root;
 use yew::App;
 
 fn main() {
