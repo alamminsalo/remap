@@ -29,7 +29,7 @@ impl Tile {
     }
     // returns northwest point of this tile
     pub fn nw(&self) -> (f64, f64) {
-        let nz = (self.z as f64).exp2();
+        let nz = 2f64.powi(self.z as i32);
         let lon = (self.x as f64 / nz) * 360.0 - 180.0;
         let lat = (PI * (1.0 - 2.0 * self.y as f64 / nz))
             .sinh()
@@ -52,6 +52,7 @@ impl Tile {
             lon_max,
             lat_min,
             lat_max,
+            z: self.z,
         }
     }
 }

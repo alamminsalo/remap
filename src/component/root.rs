@@ -6,7 +6,6 @@ const STORE_KEY: &'static str = "state.v1";
 
 pub struct Root {
     vw: Viewport,
-    zoom: u8,
 }
 
 pub enum Msg {}
@@ -22,8 +21,8 @@ impl Component for Root {
                 lon_max: 29.98,
                 lat_min: 62.56,
                 lat_max: 62.65,
+                z: 7,
             },
-            zoom: 7,
         }
     }
 
@@ -37,9 +36,7 @@ impl Component for Root {
 impl Renderable<Root> for Root {
     fn view(&self) -> Html<Self> {
         html! {
-            <div>
-                <Grid: vw=self.vw.clone(), zoom=self.zoom, />
-            </div>
+            <Grid: vw=self.vw.clone(), />
         }
     }
 }
