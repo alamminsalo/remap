@@ -1,4 +1,4 @@
-use super::BoundingBox;
+use super::Viewport;
 use std::f64::consts::PI;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
@@ -43,11 +43,11 @@ impl Tile {
     }
     // returns bounding box for this tile (mercator)
     // https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Mathematics
-    pub fn bbox(&self) -> BoundingBox {
+    pub fn bbox(&self) -> Viewport {
         let (lon_min, lat_max) = self.nw();
         let (lon_max, lat_min) = self.se();
 
-        BoundingBox {
+        Viewport {
             lon_min,
             lon_max,
             lat_min,

@@ -1,11 +1,11 @@
 use super::Grid;
-use crate::model::BoundingBox;
+use crate::model::Viewport;
 use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
 
 const STORE_KEY: &'static str = "state.v1";
 
 pub struct Root {
-    vw: BoundingBox,
+    vw: Viewport,
     zoom: u8,
 }
 
@@ -17,7 +17,7 @@ impl Component for Root {
 
     fn create(_: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         Root {
-            vw: BoundingBox {
+            vw: Viewport {
                 lon_min: 29.59,
                 lon_max: 29.98,
                 lat_min: 62.56,

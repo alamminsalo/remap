@@ -3,14 +3,14 @@ use geo::{Coordinate, Rect};
 use std::convert::{From, Into};
 
 #[derive(Default, Clone, Copy, PartialEq)]
-pub struct BoundingBox {
+pub struct Viewport {
     pub lon_min: f64,
     pub lon_max: f64,
     pub lat_min: f64,
     pub lat_max: f64,
 }
 
-impl BoundingBox {
+impl Viewport {
     // returns osm tiles that intersect with this viewport
     // https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Mathematics
     pub fn tiles(&self, z: u8) -> Vec<Tile> {
@@ -24,7 +24,7 @@ impl BoundingBox {
     }
 }
 
-impl From<Rect<f64>> for BoundingBox {
+impl From<Rect<f64>> for Viewport {
     fn from(item: Rect<f64>) -> Self {
         Self {
             lon_min: item.min.x,
@@ -35,7 +35,7 @@ impl From<Rect<f64>> for BoundingBox {
     }
 }
 
-impl Into<Rect<f64>> for BoundingBox {
+impl Into<Rect<f64>> for Viewport {
     fn into(self) -> Rect<f64> {
         Rect {
             min: Coordinate {
@@ -57,7 +57,7 @@ mod tests {
 
     #[test]
     fn test_tiles_in_bb_1() {
-        let tiles = BoundingBox {
+        let tiles = Viewport {
             lon_min: 29.59,
             lon_max: 29.98,
             lat_min: 62.56,
@@ -75,7 +75,7 @@ mod tests {
 
     #[test]
     fn test_tiles_in_bb_2() {
-        let tiles = BoundingBox {
+        let tiles = Viewport {
             lon_min: -21.4326,
             lat_max: 54.74,
             lon_max: 80.0,
@@ -110,7 +110,7 @@ mod tests {
 
     #[test]
     fn test_tiles_in_bb_3() {
-        let tiles = BoundingBox {
+        let tiles = Viewport {
             lon_min: 29.54,
             lat_max: 62.65,
             lon_max: 30.18,

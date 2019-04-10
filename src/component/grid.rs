@@ -1,17 +1,17 @@
 use crate::component::Tile;
-use crate::model::{BoundingBox, Tile as TileModel};
+use crate::model::{Tile as TileModel, Viewport};
 use yew::{html, Callback, Component, ComponentLink, Html, Renderable, ShouldRender};
 
 pub struct Grid {
     zoom: u8,
-    vw: BoundingBox,
+    vw: Viewport,
 }
 
 pub enum Msg {}
 
 #[derive(PartialEq, Clone, Default)]
 pub struct Prop {
-    pub vw: BoundingBox,
+    pub vw: Viewport,
     pub zoom: u8,
 }
 
