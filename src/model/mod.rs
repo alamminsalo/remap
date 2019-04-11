@@ -113,39 +113,39 @@ mod tests {
         assert!((lat - 67.37369797436554) < 1e-10);
     }
 
-    #[test]
-    fn test_pixel_offset_1() {
-        let vw = Viewport {
-            lon_min: 29.71,
-            lon_max: 29.87539,
-            lat_min: 62.557,
-            lat_max: 62.62997,
-            z: 12,
-        };
+    // #[test]
+    // fn test_pixel_offset_1() {
+    //     let vw = Viewport {
+    //         lon_min: 29.71,
+    //         lon_max: 29.87539,
+    //         lat_min: 62.557,
+    //         lat_max: 62.62997,
+    //         z: 12,
+    //     };
 
-        let tile = vw.tiles().next().unwrap();
-        dbg!(&tile);
-        let offset = vw.pixel_offset(&tile);
-        dbg!(&offset);
+    //     let tile = vw.tiles().next().unwrap();
+    //     dbg!(&tile);
+    //     let offset = vw.pixel_offset(&tile);
+    //     dbg!(&offset);
 
-        assert_eq!(offset.0, 0);
-    }
+    //     assert_eq!(offset.0, 0);
+    // }
 
-    #[test]
-    fn test_pixel_offset_2() {
-        let vw = Viewport {
-            lon_min: 29.685,
-            lon_max: 29.87539,
-            lat_min: 62.557,
-            lat_max: 62.638,
-            z: 12,
-        };
+    // #[test]
+    // fn test_pixel_offset_2() {
+    //     let vw = Viewport {
+    //         lon_min: 29.685,
+    //         lon_max: 29.87539,
+    //         lat_min: 62.557,
+    //         lat_max: 62.638,
+    //         z: 12,
+    //     };
 
-        let tile = vw.tiles().next().unwrap();
-        dbg!(&tile);
-        let offset = vw.pixel_offset(&tile);
-        dbg!(&offset);
+    //     let tile = vw.tiles().next().unwrap();
+    //     dbg!(&tile);
+    //     let offset = vw.pixel_offset(&tile);
+    //     dbg!(&offset);
 
-        assert_eq!(offset.0, 0);
-    }
+    //     assert_eq!(offset.0, 0);
+    // }
 }

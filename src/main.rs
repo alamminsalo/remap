@@ -1,8 +1,8 @@
-use remap::component::Root;
+use remap::component::Map;
 use yew::App;
 
 fn main() {
     yew::initialize();
-    App::<Root>::new().mount_to_body();
+    App::<Map>::new().mount_to_body();
     yew::run_loop();
 }

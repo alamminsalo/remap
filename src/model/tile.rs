@@ -1,4 +1,5 @@
 use super::Viewport;
+use googleprojection as wgs84;
 use std::f64::consts::PI;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
@@ -54,5 +55,11 @@ impl Tile {
             lat_max,
             z: self.z,
         }
+    }
+
+    pub fn pixels(&self) -> (i64, i64) {
+        let px: (f64, f64) =
+            wgs84::from_ll_to_pixel(&self.nw(), self.z as usize).unwrap_or((0.0, 0.0));
+        (px.0 as i64, px.1 as i64)
     }
 }
