@@ -20,8 +20,9 @@ cargo_build:
   script:
     # compile rust
     - cargo install cargo-web --quiet || true
-    - cargo web deploy --release
-    - mv target/deploy static
+    - cargo web build --release
+    - mv target/wasm32-unknown-unknown/release/remap.js static
+    - mv target/wasm32-unknown-unknown/release/remap.wasm static
   artifacts:
     paths:
       - static
