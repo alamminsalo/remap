@@ -1,12 +1,11 @@
 use super::Grid;
 use crate::model::Viewport;
+use crate::state::movement;
 use geo::Coordinate;
 use stdweb::unstable::TryInto;
-use stdweb::Value;
 use uuid::Uuid;
-use yew::{html, Callback, Component, ComponentLink, Html, Renderable, ShouldRender};
-
-const STORE_KEY: &'static str = "state.v1";
+use yew::events::IMouseEvent;
+use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
 
 pub struct Map {
     id: String,
@@ -16,11 +15,15 @@ pub struct Map {
     // pixel width, height
     width: i32,
     height: i32,
+    move_state: movement::State,
 }
 
 pub enum Msg {
     Init,
     Refresh,
+    Move(i32, i32),
+    MoveBegin(i32, i32),
+    MoveEnd(i32, i32),
 }
 
 impl Component for Map {
@@ -35,6 +38,7 @@ impl Component for Map {
             height: 256,
             width: 256,
             zoom: 13,
+            move_state: movement::State::default(),
             link,
         }
     }
@@ -71,16 +75,47 @@ impl Component for Map {
 
                 true
             }
+            Msg::Move(x, y) => {
+                // console!(log, "move");
+                if self.move_state.is_moving() {
+                    self.move_state.set_position((x, y));
+                }
+                true
+            }
+            Msg::MoveBegin(x, y) => {
+                // console!(log, "move begin");
+                self.move_state.begin((x, y));
+                false
+            }
+            Msg::MoveEnd(x, y) => {
+                // console!(log, "move end");
+                let offset = self.move_state.end((x, y));
+                // set viewport
+                let vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
+                self.center = vw.translate(offset).center();
+                true
+            }
         }
     }
 }
 
 impl Renderable<Map> for Map {
     fn view(&self) -> Html<Self> {
-        let vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
+        let mut vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
+
+        if self.move_state.is_moving() {
+            // apply transform
+            vw = vw.translate(self.move_state.offset());
+        }
+
         html! {
             <div id={&self.id}, class="remap-map",>
-                <Grid: vw=vw, />
+                <div class="remap-viewport",
+                    onpointerdown=|e| Msg::MoveBegin(e.client_x(), e.client_y()),
+                    onpointerup=|e| Msg::MoveEnd(e.client_x(), e.client_y()),
+                    onpointermove=|e| Msg::Move(e.client_x(), e.client_y()),>
+                    <Grid: vw=vw, />
+                </div>
             </div>
         }
     }

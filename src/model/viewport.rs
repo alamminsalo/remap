@@ -37,6 +37,40 @@ impl Viewport {
         }
     }
 
+    // translates by given pixel amount
+    pub fn translate(&self, xy: (i32, i32)) -> Viewport {
+        // original pixels
+        let (vw_x, vw_y) = self.pixels();
+
+        // translated pixels
+        let (gx, gy) = (vw_x + xy.0 as i64, vw_y + xy.1 as i64);
+
+        // new nw lonlat
+        let nw =
+            wgs84::from_pixel_to_ll(&(gx as f64, gy as f64), self.z as usize).unwrap_or((0.0, 0.0));
+
+        // diff along axises
+        let lon_d = self.lon_min - nw.0;
+        let lat_d = self.lat_max - nw.1;
+
+        Viewport {
+            lon_min: self.lon_min + lon_d,
+            lon_max: self.lon_max + lon_d,
+            lat_min: self.lat_min + lat_d,
+            lat_max: self.lat_max + lat_d,
+            z: self.z,
+        }
+    }
+
+    // Returns naive center
+    // of this viewport
+    pub fn center(&self) -> Coordinate<f64> {
+        Coordinate {
+            x: (self.lon_min + self.lon_max) / 2.0,
+            y: (self.lat_min + self.lat_max) / 2.0,
+        }
+    }
+
     // returns osm tiles that intersect with this viewport
     // https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Mathematics
     pub fn tiles(&self) -> impl Iterator<Item = Tile> {
