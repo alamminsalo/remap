@@ -1,0 +1,43 @@
+image: alpine:latest
+
+stages:
+  - build
+  - deploy
+
+variables:
+  CARGO_HOME: $CI_PROJECT_DIR/cargo
+
+cache:
+  paths:
+    - target
+    - $CARGO_HOME
+    - web/node_modules
+    - web/.cache
+
+cargo_build:
+  image: rust:1.33
+  stage: build
+  script:
+    # compile rust
+    - cargo install cargo-web --quiet || true
+    - cargo web deploy --release
+    - mv target/deploy static
+  artifacts:
+    paths:
+      - static
+
+pages:
+  stage: deploy
+  variables:
+    ACME_CHALLENGE: ''
+    ACME_FILE: 'noop'
+  script:
+    # copy dist to public dir
+    - cp -r static public
+    # make acme challenge
+    - mkdir -p public/.well-known/acme-challenge/
+    - echo $ACME_CHALLENGE > public/.well-known/acme-challenge/$ACME_FILE
+  artifacts:
+    paths:
+      - public
+
