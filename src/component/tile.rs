@@ -58,7 +58,8 @@ impl Renderable<Tile> for Tile {
     fn view(&self) -> Html<Self> {
         // make url
         let url = format!(
-            "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+            // "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "http://a.tile.thunderforest.com/cycle/{z}/{x}/{y}.png",
             z = self.tile.z,
             x = self.tile.x,
             y = self.tile.y

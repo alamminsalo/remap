@@ -2,6 +2,12 @@
   height: 100%;
 }
 
+.remap-zoom-controls {
+  position: absolute;
+  padding: 20px;
+  z-index: 1;
+}
+
 .remap-viewport {
   height: 100%;
   position: relative;
@@ -10,7 +16,7 @@
 }
 
 .remap-tile-grid {
-  position: relative;
+  position: absolute;
 }
 
 .remap-tile-row {

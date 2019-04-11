@@ -24,6 +24,7 @@ pub enum Msg {
     Move(i32, i32),
     MoveBegin(i32, i32),
     MoveEnd(i32, i32),
+    Zoom(i8),
 }
 
 impl Component for Map {
@@ -95,6 +96,13 @@ impl Component for Map {
                 self.center = vw.translate(offset).center();
                 true
             }
+            Msg::Zoom(z) => {
+                console!(log, "zoom");
+                if z >= 1 && z <= 18 {
+                    self.zoom = z as u8;
+                }
+                true
+            }
         }
     }
 }
@@ -108,12 +116,21 @@ impl Renderable<Map> for Map {
             vw = vw.translate(self.move_state.offset());
         }
 
+        // zoomlevel
+        let z = self.zoom as i8;
+
         html! {
             <div id={&self.id}, class="remap-map",>
+                <div class="remap-zoom-controls",>
+                    <div>{&format!("zoom: {}", &z)}</div>
+                    <div><button onclick=|_| Msg::Zoom(z + 1),>{"+"}</button></div>
+                    <div><button onclick=|_| Msg::Zoom(z - 1),>{"-"}</button></div>
+                </div>
                 <div class="remap-viewport",
                     onpointerdown=|e| Msg::MoveBegin(e.client_x(), e.client_y()),
                     onpointerup=|e| Msg::MoveEnd(e.client_x(), e.client_y()),
                     onpointermove=|e| Msg::Move(e.client_x(), e.client_y()),>
+                    // tile grid
                     <Grid: vw=vw, />
                 </div>
             </div>
