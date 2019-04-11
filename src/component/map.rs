@@ -120,7 +120,7 @@ impl Renderable<Map> for Map {
         let z = self.zoom as i8;
 
         html! {
-            <div id={&self.id}, class="remap-map",>
+            <div id={&self.id}, class="remap-map", ondragstart="return false",>
                 <div class="remap-zoom-controls",>
                     <div>{&format!("zoom: {}", &z)}</div>
                     <div><button onclick=|_| Msg::Zoom(z + 1),>{"+"}</button></div>
