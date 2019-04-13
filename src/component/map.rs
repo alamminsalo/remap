@@ -22,8 +22,8 @@ pub enum Msg {
     Init,
     Refresh,
     Move(i32, i32),
-    MoveBegin(i32, i32),
-    MoveEnd(i32, i32),
+    MoveBegin,
+    MoveEnd,
     Zoom(i8),
 }
 
@@ -77,24 +77,28 @@ impl Component for Map {
                 true
             }
             Msg::Move(x, y) => {
-                // console!(log, "move");
                 if self.move_state.is_moving() {
-                    self.move_state.set_position((x, y));
+                    self.move_state.add_movement((x, y));
+                    let pos = self.move_state.position;
+                    console!(log, "move", &pos.0, &pos.1);
                 }
                 true
             }
-            Msg::MoveBegin(x, y) => {
-                // console!(log, "move begin");
-                self.move_state.begin((x, y));
+            Msg::MoveBegin => {
+                console!(log, "move begin");
+                self.move_state.begin();
                 false
             }
-            Msg::MoveEnd(x, y) => {
-                // console!(log, "move end");
-                let offset = self.move_state.end((x, y));
-                // set viewport
-                let vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
-                self.center = vw.translate(offset).center();
-                true
+            Msg::MoveEnd => {
+                if self.move_state.is_moving() {
+                    console!(log, "move end");
+                    let offset = self.move_state.end();
+                    let vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
+                    self.center = vw.translate(offset).center();
+                    true
+                } else {
+                    false
+                }
             }
             Msg::Zoom(z) => {
                 console!(log, "zoom");
@@ -113,23 +117,24 @@ impl Renderable<Map> for Map {
 
         if self.move_state.is_moving() {
             // apply transform
-            vw = vw.translate(self.move_state.offset());
+            vw = vw.translate(self.move_state.position);
         }
 
         // zoomlevel
         let z = self.zoom as i8;
 
         html! {
-            <div id={&self.id}, class="remap-map", ondragstart="return false",>
+            <div id={&self.id}, class="remap-map",>
                 <div class="remap-zoom-controls",>
                     <div>{&format!("zoom: {}", &z)}</div>
                     <div><button onclick=|_| Msg::Zoom(z + 1),>{"+"}</button></div>
                     <div><button onclick=|_| Msg::Zoom(z - 1),>{"-"}</button></div>
                 </div>
                 <div class="remap-viewport",
-                    onpointerdown=|e| Msg::MoveBegin(e.client_x(), e.client_y()),
-                    onpointerup=|e| Msg::MoveEnd(e.client_x(), e.client_y()),
-                    onpointermove=|e| Msg::Move(e.client_x(), e.client_y()),>
+                    onpointerdown=|_| Msg::MoveBegin,
+                    onpointerup=|_| Msg::MoveEnd,
+                    onpointerleave=|_| Msg::MoveEnd,
+                    onpointermove=|e| Msg::Move(e.movement_x(), e.movement_y()),>
                     // tile grid
                     <Grid: vw=vw, />
                 </div>

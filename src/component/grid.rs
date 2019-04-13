@@ -44,7 +44,8 @@ impl Renderable<Grid> for Grid {
         let first_tile = TileModel::from_lonlat(self.vw.lon_min, self.vw.lat_max, self.vw.z);
         let offset = self.vw.pixel_offset(&first_tile);
         html! {
-            <div class="remap-tile-grid", style={format!("left: {}px; top: {}px", &offset.0, &offset.1)},>
+            <div class="remap-tile-grid",
+                style={format!("left: {}px; top: {}px", &offset.0, &offset.1)},>
                 { for tile_rows.into_iter().map(tile_row) }
             </div>
         }

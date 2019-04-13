@@ -66,7 +66,10 @@ impl Renderable<Tile> for Tile {
         );
 
         html! {
-            <img class="remap-tile", src={&url},/>
+            <img class="remap-tile",
+                src={&url},
+                draggable="false",
+                />
         }
     }
 }
