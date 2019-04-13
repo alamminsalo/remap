@@ -29,6 +29,7 @@ cargo_build:
 
 pages:
   stage: deploy
+  only: master
   variables:
     ACME_CHALLENGE: ''
     ACME_FILE: 'noop'
