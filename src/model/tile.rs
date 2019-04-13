@@ -4,13 +4,13 @@ use std::f64::consts::PI;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Tile {
-    pub z: u8,
     pub x: u32,
     pub y: u32,
+    pub z: usize,
 }
 
 impl Tile {
-    pub fn from_lonlat(lon: f64, lat: f64, z: u8) -> Self {
+    pub fn from_lonlat(lon: f64, lat: f64, z: usize) -> Self {
         let znx = 2f64.powi(z as i32);
         let zny = 2f64.powi(z as i32 - 1);
         let lat_rad = lat.to_radians();
