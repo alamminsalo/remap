@@ -15,12 +15,26 @@ impl LonLat {
         }
     }
 
-    pub fn translate(&self, lon: f64, lat: f64) -> Self {
-        Self {
-            lon: self.lon + lon,
-            lat: self.lat + lat,
-        }
-    }
+    // pub fn distance(&self, other: &Self) -> Self {
+    //     Self {
+    //         lon: self.lon - other.lon,
+    //         lat: self.lat - other.lat,
+    //     }
+    // }
+
+    // pub fn avg(&self, other: &Self) -> Self {
+    //     Self {
+    //         lon: self.lon / 2.0 + other.lon / 2.0,
+    //         lat: self.lat / 2.0 + other.lat / 2.0,
+    //     }
+    // }
+
+    // pub fn translate(&self, other: &Self) -> Self {
+    //     Self {
+    //         lon: self.lon + other.lon,
+    //         lat: self.lat + other.lat,
+    //     }
+    // }
 }
 
 impl Into<(f64, f64)> for LonLat {
@@ -51,10 +65,24 @@ impl Px {
         LonLat { lon, lat }
     }
 
-    pub fn translate(&self, x: i64, y: i64) -> Self {
+    pub fn distance(&self, other: &Self) -> Self {
         Self {
-            x: self.x + x,
-            y: self.y + y,
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
+    }
+
+    pub fn avg(&self, other: &Self) -> Self {
+        Self {
+            x: self.x / 2 + other.x / 2,
+            y: self.y / 2 + other.y / 2,
+        }
+    }
+
+    pub fn translate(&self, other: &Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
         }
     }
 }
@@ -68,6 +96,15 @@ impl Into<(i64, i64)> for Px {
 impl From<(i64, i64)> for Px {
     fn from(xy: (i64, i64)) -> Self {
         Self { x: xy.0, y: xy.1 }
+    }
+}
+
+impl From<(i32, i32)> for Px {
+    fn from(xy: (i32, i32)) -> Self {
+        Self {
+            x: xy.0 as i64,
+            y: xy.1 as i64,
+        }
     }
 }
 

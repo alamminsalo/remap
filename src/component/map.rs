@@ -141,7 +141,7 @@ impl Component for Map {
                     //console!(log, "move end");
                     let offset = self.move_state.end();
                     let vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
-                    self.center = vw.translate(offset).center();
+                    self.center = vw.translate(offset.into()).center();
                     true
                 } else {
                     false
@@ -187,7 +187,7 @@ impl Renderable<Map> for Map {
         let mut vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
         // apply transform on middle of moving
         if self.move_state.is_moving() {
-            vw = vw.translate(self.move_state.offset());
+            vw = vw.translate(self.move_state.offset().into());
         }
 
         // zoomlevel

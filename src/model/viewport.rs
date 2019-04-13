@@ -1,6 +1,5 @@
 use super::position::{LonLat, Px};
 use super::Tile;
-use googleprojection as wgs84;
 
 // Viewport: boundingbox with zoom level
 // and useful transformation logic
@@ -19,8 +18,8 @@ impl Viewport {
     pub fn new(center: &LonLat, size_px: (i32, i32), zoom: usize) -> Self {
         let (dx, dy) = (size_px.0 / 2, size_px.1 / 2);
         let px = center.px(zoom);
-        let nw = px.translate(-dx as i64, -dy as i64).lonlat(zoom);
-        let se = px.translate(dx as i64, dy as i64).lonlat(zoom);
+        let nw = px.translate(&(-dx as i64, -dy as i64).into()).lonlat(zoom);
+        let se = px.translate(&(dx as i64, dy as i64).into()).lonlat(zoom);
 
         Self {
             lon_min: nw.lon,
@@ -32,20 +31,16 @@ impl Viewport {
     }
 
     // translates by given pixel amount
-    pub fn translate(&self, xy: (i32, i32)) -> Viewport {
-        // original pixels
-        let (vw_x, vw_y) = self.pixels();
-
+    pub fn translate(&self, xy: Px) -> Viewport {
         // translated pixels
-        let (gx, gy) = (vw_x + xy.0 as i64, vw_y + xy.1 as i64);
+        let px: Px = self.pixels().translate(&xy);
 
         // new nw lonlat
-        let nw =
-            wgs84::from_pixel_to_ll(&(gx as f64, gy as f64), self.z as usize).unwrap_or((0.0, 0.0));
+        let nw = px.lonlat(self.z);
 
         // diff along axises
-        let lon_d = self.lon_min - nw.0;
-        let lat_d = self.lat_max - nw.1;
+        let lon_d = self.lon_min - nw.lon;
+        let lat_d = self.lat_max - nw.lat;
 
         Viewport {
             lon_min: self.lon_min + lon_d,
@@ -56,28 +51,14 @@ impl Viewport {
         }
     }
 
-    // naive center, use this in emergencies only
-    fn naive_center(&self) -> (f64, f64) {
-        (
-            self.lon_min / 2.0 + self.lon_max / 2.0,
-            self.lat_min / 2.0 + self.lat_max / 2.0,
-        )
-    }
-
     // Returns center of this viewport
     pub fn center(&self) -> LonLat {
         // nw pixel corner
-        let (x0, y0) = self.pixels();
-
-        // se pixel corner
-        let (x1, y1): (f64, f64) =
-            wgs84::from_ll_to_pixel(&(self.lon_max, self.lat_min), self.z as usize)
-                .unwrap_or((x0 as f64, y0 as f64));
-
-        // getn center lonlat from center world pixels
-        let center_px: Px = ((x0 as f64) / 2.0 + x1 / 2.0, (y0 as f64) / 2.0 + y1 / 2.0).into();
-
-        center_px.lonlat(self.z)
+        let nw_px = self.pixels();
+        // se corner
+        let se: LonLat = (self.lon_max, self.lat_min).into();
+        // get center px and return lonlat from it
+        nw_px.avg(&se.px(self.z)).lonlat(self.z)
     }
 
     // returns osm tiles that intersect with this viewport
@@ -92,17 +73,13 @@ impl Viewport {
     }
 
     // calculates pixel offset for tile
-    pub fn pixel_offset(&self, tile: &Tile) -> (i64, i64) {
-        let (x, y) = self.pixels();
-        let (t_x, t_y) = tile.pixels();
-        (t_x - x, t_y - y)
+    pub fn pixel_offset(&self, tile: &Tile) -> Px {
+        tile.pixels().distance(&self.pixels())
     }
 
     // get pixel coordinates (NW corner)
-    pub fn pixels(&self) -> (i64, i64) {
-        let px: (f64, f64) =
-            wgs84::from_ll_to_pixel(&(self.lon_min, self.lat_max), self.z as usize)
-                .unwrap_or((0.0, 0.0));
-        (px.0 as i64, px.1 as i64)
+    pub fn pixels(&self) -> Px {
+        let ll: LonLat = (self.lon_min, self.lat_max).into();
+        ll.px(self.z)
     }
 }

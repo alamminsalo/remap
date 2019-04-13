@@ -71,7 +71,7 @@ impl Renderable<Tile> for Tile {
         );
 
         html! {
-            <span class="remap-tile", style={&format!("background-image: url('{}')",&url)},/>
+            <span class="remap-tile", style={&format!("background-image: url({})",&url)}, />
         }
     }
 }
