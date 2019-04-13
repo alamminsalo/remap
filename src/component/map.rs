@@ -123,19 +123,19 @@ impl Component for Map {
             Msg::Move(x, y) => {
                 if self.move_state.is_moving() {
                     self.move_state.set_position((x, y));
-                    let pos = self.move_state.offset();
-                    console!(log, "move", &pos.0, &pos.1);
+                    //let pos = self.move_state.offset();
+                    //console!(log, "move", &pos.0, &pos.1);
                 }
                 true
             }
             Msg::MoveBegin(x, y) => {
-                console!(log, "move begin");
+                //console!(log, "move begin");
                 self.move_state.begin((x, y));
                 false
             }
             Msg::MoveEnd => {
                 if self.move_state.is_moving() {
-                    console!(log, "move end");
+                    //console!(log, "move end");
                     let offset = self.move_state.end();
                     let vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
                     self.center = vw.translate(offset).center();
@@ -145,7 +145,7 @@ impl Component for Map {
                 }
             }
             Msg::Zoom(z) => {
-                console!(log, "zoom");
+                //console!(log, "zoom");
                 if z >= 1 && z <= 18 {
                     self.zoom = z as u8;
                 }
