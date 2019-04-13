@@ -65,6 +65,13 @@ impl Px {
         LonLat { lon, lat }
     }
 
+    pub fn neg(&self) -> Self {
+        Self {
+            x: -self.x,
+            y: -self.y,
+        }
+    }
+
     pub fn distance(&self, other: &Self) -> Self {
         Self {
             x: self.x - other.x,

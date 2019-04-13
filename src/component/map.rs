@@ -139,9 +139,12 @@ impl Component for Map {
             Msg::MoveEnd => {
                 if self.move_state.is_moving() {
                     //console!(log, "move end");
-                    let offset = self.move_state.end();
-                    let vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
-                    self.center = vw.translate(offset.into()).center();
+                    let offset: Px = self.move_state.end().into();
+                    self.center = self
+                        .center
+                        .px(self.zoom)
+                        .translate(&offset.neg())
+                        .lonlat(self.zoom);
                     true
                 } else {
                     false
@@ -158,37 +161,16 @@ impl Component for Map {
     }
 }
 
-// fn translate_coord(c: &Coordinate<f64>, offset: (i32,i32)) -> Coordinate {
-//         // original pixels
-//         let (cx,cy) = wgs84::
-//
-//         // translated pixels
-//         let (gx, gy) = (vw_x + xy.0 as i64, vw_y + xy.1 as i64);
-//
-//         // new nw lonlat
-//         let nw =
-//             wgs84::from_pixel_to_ll(&(gx as f64, gy as f64), self.z as usize).unwrap_or((0.0, 0.0));
-//
-//         // diff along axises
-//         let lon_d = self.lon_min - nw.0;
-//         let lat_d = self.lat_max - nw.1;
-//
-//         Viewport {
-//             lon_min: self.lon_min + lon_d,
-//             lon_max: self.lon_max + lon_d,
-//             lat_min: self.lat_min + lat_d,
-//             lat_max: self.lat_max + lat_d,
-//             z: self.z,
-//         }
-// }
-
 impl Renderable<Map> for Map {
     fn view(&self) -> Html<Self> {
-        let mut vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
+        // make viewport
         // apply transform on middle of moving
+        let mut c = self.center.px(self.zoom);
         if self.move_state.is_moving() {
-            vw = vw.translate(self.move_state.offset().into());
+            let offset_px: Px = self.move_state.offset().into();
+            c = c.translate(&offset_px.neg());
         }
+        let vw = Viewport::new(&c.lonlat(self.zoom), (self.width, self.height), self.zoom);
 
         // zoomlevel
         let z = self.zoom as i8;
