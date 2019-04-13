@@ -8,12 +8,13 @@
   z-index: 1;
 }
 
+.remap-control {
+}
+
 .remap-viewport {
   height: 100%;
   position: relative;
   overflow: hidden;
-  border: 1px solid blue;
-  background: whitesmoke;
 }
 
 .remap-tile-grid {

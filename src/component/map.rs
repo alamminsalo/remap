@@ -170,9 +170,8 @@ impl Renderable<Map> for Map {
         html! {
             <div id={&self.id}, class="remap-map",>
                 <div class="remap-zoom-controls",>
-                    <div>{&format!("zoom: {}", &z)}</div>
-                    <div><button onclick=|_| Msg::Zoom(z + 1),>{"+"}</button></div>
-                    <div><button onclick=|_| Msg::Zoom(z - 1),>{"-"}</button></div>
+                    <div class="remap-control",><button onclick=|_| Msg::Zoom(z + 1),>{"+"}</button></div>
+                    <div class="remap-control",><button onclick=|_| Msg::Zoom(z - 1),>{"-"}</button></div>
                 </div>
                 <div class="remap-viewport",
                     onmousedown=|e| Msg::MoveBegin(e.screen_x(), e.screen_y()),
