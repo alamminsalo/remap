@@ -66,10 +66,7 @@ impl Renderable<Tile> for Tile {
         );
 
         html! {
-            <img class="remap-tile",
-                src={&url},
-                draggable="false",
-                />
+            <span class="remap-tile", style={&format!("background-image: url('{}')",&url)},/>
         }
     }
 }

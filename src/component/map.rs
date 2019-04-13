@@ -3,24 +3,35 @@ use crate::model::Viewport;
 use crate::state::movement;
 use geo::Coordinate;
 use stdweb::unstable::TryInto;
+use stdweb::web::event::ResizeEvent;
+use stdweb::web::{
+    document, window, Element, EventListenerHandle, HtmlElement, IEventTarget, IHtmlElement,
+    INonElementParentNode,
+};
 use uuid::Uuid;
 use yew::events::IMouseEvent;
 use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
 
 pub struct Map {
+    link: ComponentLink<Self>,
+
+    // inner state variables
     id: String,
     center: Coordinate<f64>,
     zoom: u8,
-    link: ComponentLink<Self>,
-    // pixel width, height
-    width: i32,
-    height: i32,
+    width: i32,  // pixels
+    height: i32, // pixels
+
+    // state handlers
     move_state: movement::State,
+
+    // dom callback handles
+    resize_handle: Option<EventListenerHandle>,
 }
 
 pub enum Msg {
     Init,
-    Refresh,
+    Resize,
     Move(i32, i32),
     MoveBegin,
     MoveEnd,
@@ -40,41 +51,39 @@ impl Component for Map {
             width: 256,
             zoom: 13,
             move_state: movement::State::default(),
-            link,
+            link: link,
+            resize_handle: None,
         }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::Init => {
-                let cb = self.link.send_back(|_| Msg::Refresh);
-                let closure = move || cb.emit(());
-                js! {
-                    var _cb = @{closure};
-                    var callback = function(){
-                        _cb();
-                    };
-                    window.addEventListener("resize", callback);
-                    var el = document.getElementById(@{self.id.clone()});
-                    el.rs_closures = [_cb];
-                };
-                self.link.send_self(Msg::Refresh);
+                // make resize event handler
+                let cb = self.link.send_back(|_| Msg::Resize);
+                self.resize_handle =
+                    Some(window().add_event_listener(move |_: ResizeEvent| cb.emit(())));
+                // send initial resize event
+                self.link.send_self(Msg::Resize);
+                // no need for immediate redraw
                 false
             }
-            Msg::Refresh => {
-                // Get size of el
-                let size: Vec<i32> = js! {
-                    var self = document.getElementById(@{self.id.clone()});
-                    return [ self.clientWidth, self.clientHeight ];
-                }
-                .try_into()
-                .unwrap_or(vec![0, 0]);
-
-                // set width, height
-                self.width = size[0];
-                self.height = size[1];
-
-                true
+            Msg::Resize => {
+                // get element
+                document()
+                    .get_element_by_id(&self.id)
+                    .map(|el: Element| {
+                        // try into html element, which has the rect methods
+                        el.try_into()
+                            .map(|html_el: HtmlElement| {
+                                // set width, height from rect object
+                                let r = html_el.get_bounding_client_rect();
+                                self.width = r.get_width() as i32;
+                                self.height = r.get_height() as i32;
+                            })
+                            .ok()
+                    })
+                    .is_some()
             }
             Msg::Move(x, y) => {
                 if self.move_state.is_moving() {
