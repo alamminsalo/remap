@@ -2,27 +2,36 @@
 pub struct State {
     // status which tells if moving is in progress
     pub status: Status,
+    // origin of movement
+    origin: (i32, i32),
     // position of movement
-    pub position: (i32, i32),
+    position: (i32, i32),
 }
 
 impl State {
     // begins movement, storing origin point
-    pub fn begin(&mut self) {
+    pub fn begin(&mut self, xy: (i32, i32)) {
         self.status = Status::Moving;
-        self.position = (0, 0);
+        self.origin = xy.clone();
+        self.position = xy;
     }
     // ends state. returns position
     pub fn end(&mut self) -> (i32, i32) {
         self.status = Status::NotMoving;
-        self.position
+        self.offset()
     }
     // applies movement
-    pub fn add_movement(&mut self, movement: (i32, i32)) {
-        self.position = (self.position.0 + movement.0, self.position.1 + movement.1);
+    pub fn set_position(&mut self, xy: (i32, i32)) {
+        self.position = xy;
     }
     pub fn is_moving(&self) -> bool {
         self.status == Status::Moving
+    }
+    pub fn offset(&self) -> (i32, i32) {
+        (
+            self.position.0 - self.origin.0,
+            self.position.1 - self.origin.1,
+        )
     }
 }
 

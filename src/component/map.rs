@@ -3,7 +3,7 @@ use crate::model::Viewport;
 use crate::state::movement;
 use geo::Coordinate;
 use stdweb::unstable::TryInto;
-use stdweb::web::event::ResizeEvent;
+use stdweb::web::event::{ITouchEvent, ResizeEvent, TouchEnd, TouchMove, TouchStart};
 use stdweb::web::{
     document, window, Element, EventListenerHandle, HtmlElement, IEventTarget, IHtmlElement,
     INonElementParentNode,
@@ -27,13 +27,16 @@ pub struct Map {
 
     // dom callback handles
     resize_handle: Option<EventListenerHandle>,
+    touchend_handle: Option<EventListenerHandle>,
+    touchstart_handle: Option<EventListenerHandle>,
+    touchmove_handle: Option<EventListenerHandle>,
 }
 
 pub enum Msg {
     Init,
     Resize,
     Move(i32, i32),
-    MoveBegin,
+    MoveBegin(i32, i32),
     MoveEnd,
     Zoom(i8),
 }
@@ -52,7 +55,11 @@ impl Component for Map {
             zoom: 13,
             move_state: movement::State::default(),
             link: link,
+            // handlers empty at first
             resize_handle: None,
+            touchend_handle: None,
+            touchstart_handle: None,
+            touchmove_handle: None,
         }
     }
 
@@ -63,6 +70,34 @@ impl Component for Map {
                 let cb = self.link.send_back(|_| Msg::Resize);
                 self.resize_handle =
                     Some(window().add_event_listener(move |_: ResizeEvent| cb.emit(())));
+
+                // touch start
+                let cb = self.link.send_back(|e: TouchStart| {
+                    match e.target_touches().iter().next() {
+                        Some(touch) => {
+                            Msg::MoveBegin(touch.screen_x() as i32, touch.screen_y() as i32)
+                        }
+                        _ => Msg::MoveEnd, // may end movement if no touches found
+                    }
+                });
+                self.touchstart_handle =
+                    Some(window().add_event_listener(move |e: TouchStart| cb.emit(e)));
+
+                // touch end
+                let cb = self.link.send_back(|_| Msg::MoveEnd);
+                self.touchend_handle =
+                    Some(window().add_event_listener(move |_: TouchEnd| cb.emit(())));
+
+                // touch move
+                let cb = self.link.send_back(|e: TouchMove| {
+                    match e.target_touches().iter().next() {
+                        Some(touch) => Msg::Move(touch.screen_x() as i32, touch.screen_y() as i32),
+                        _ => Msg::MoveEnd, // may end movement if no touches found
+                    }
+                });
+                self.touchmove_handle =
+                    Some(window().add_event_listener(move |e: TouchMove| cb.emit(e)));
+
                 // send initial resize event
                 self.link.send_self(Msg::Resize);
                 // no need for immediate redraw
@@ -87,15 +122,15 @@ impl Component for Map {
             }
             Msg::Move(x, y) => {
                 if self.move_state.is_moving() {
-                    self.move_state.add_movement((x, y));
-                    let pos = self.move_state.position;
+                    self.move_state.set_position((x, y));
+                    let pos = self.move_state.offset();
                     console!(log, "move", &pos.0, &pos.1);
                 }
                 true
             }
-            Msg::MoveBegin => {
+            Msg::MoveBegin(x, y) => {
                 console!(log, "move begin");
-                self.move_state.begin();
+                self.move_state.begin((x, y));
                 false
             }
             Msg::MoveEnd => {
@@ -126,7 +161,7 @@ impl Renderable<Map> for Map {
 
         if self.move_state.is_moving() {
             // apply transform
-            vw = vw.translate(self.move_state.position);
+            vw = vw.translate(self.move_state.offset());
         }
 
         // zoomlevel
@@ -140,10 +175,10 @@ impl Renderable<Map> for Map {
                     <div><button onclick=|_| Msg::Zoom(z - 1),>{"-"}</button></div>
                 </div>
                 <div class="remap-viewport",
-                    onpointerdown=|_| Msg::MoveBegin,
-                    onpointerup=|_| Msg::MoveEnd,
-                    onpointerleave=|_| Msg::MoveEnd,
-                    onpointermove=|e| Msg::Move(e.movement_x(), e.movement_y()),>
+                    onmousedown=|e| Msg::MoveBegin(e.screen_x(), e.screen_y()),
+                    onmouseup=|_| Msg::MoveEnd,
+                    onmouseleave=|_| Msg::MoveEnd,
+                    onmousemove=|e| Msg::Move(e.screen_x(), e.screen_y()),>
                     // tile grid
                     <Grid: vw=vw, />
                 </div>
