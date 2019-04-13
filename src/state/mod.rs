@@ -1,1 +1,1 @@
-pub mod movement;
+pub mod panning;

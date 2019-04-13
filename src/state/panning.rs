@@ -11,13 +11,13 @@ pub struct State {
 impl State {
     // begins movement, storing origin point
     pub fn begin(&mut self, xy: (i32, i32)) {
-        self.status = Status::Moving;
+        self.status = Status::Active;
         self.origin = xy.clone();
         self.position = xy;
     }
     // ends state. returns position
     pub fn end(&mut self) -> (i32, i32) {
-        self.status = Status::NotMoving;
+        self.status = Status::Inactive;
         self.offset()
     }
     // applies movement
@@ -25,7 +25,7 @@ impl State {
         self.position = xy;
     }
     pub fn is_moving(&self) -> bool {
-        self.status == Status::Moving
+        self.status == Status::Active
     }
     pub fn offset(&self) -> (i32, i32) {
         (
@@ -37,12 +37,12 @@ impl State {
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum Status {
-    NotMoving,
-    Moving,
+    Inactive,
+    Active,
 }
 
 impl Default for Status {
     fn default() -> Self {
-        Status::NotMoving
+        Status::Inactive
     }
 }

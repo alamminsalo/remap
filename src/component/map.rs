@@ -1,7 +1,7 @@
 use super::Grid;
 use crate::model::position::{LonLat, Px};
 use crate::model::Viewport;
-use crate::state::movement;
+use crate::state::panning;
 use stdweb::unstable::TryInto;
 use stdweb::web::event::{ITouchEvent, ResizeEvent, TouchEnd, TouchMove, TouchStart};
 use stdweb::web::{
@@ -23,7 +23,7 @@ pub struct Map {
     height: i32, // pixels
 
     // state handlers
-    move_state: movement::State,
+    panning: panning::State,
 
     // dom callback handles
     resize_handle: Option<EventListenerHandle>,
@@ -56,7 +56,7 @@ impl Component for Map {
             height: 256,
             width: 256,
             zoom: 13,
-            move_state: movement::State::default(),
+            panning: panning::State::default(),
             link: link,
             // handlers empty at first
             resize_handle: None,
@@ -80,7 +80,7 @@ impl Component for Map {
                         Some(touch) => {
                             Msg::MoveBegin(touch.screen_x() as i32, touch.screen_y() as i32)
                         }
-                        _ => Msg::MoveEnd, // may end movement if no touches found
+                        _ => Msg::MoveEnd, // may end panning if no touches found
                     }
                 });
                 self.touchstart_handle =
@@ -95,7 +95,7 @@ impl Component for Map {
                 let cb = self.link.send_back(|e: TouchMove| {
                     match e.target_touches().iter().next() {
                         Some(touch) => Msg::Move(touch.screen_x() as i32, touch.screen_y() as i32),
-                        _ => Msg::MoveEnd, // may end movement if no touches found
+                        _ => Msg::MoveEnd, // may end panning if no touches found
                     }
                 });
                 self.touchmove_handle =
@@ -124,22 +124,22 @@ impl Component for Map {
                     .is_some()
             }
             Msg::Move(x, y) => {
-                if self.move_state.is_moving() {
-                    self.move_state.set_position((x, y));
-                    //let pos = self.move_state.offset();
+                if self.panning.is_moving() {
+                    self.panning.set_position((x, y));
+                    //let pos = self.panning.offset();
                     //console!(log, "move", &pos.0, &pos.1);
                 }
                 true
             }
             Msg::MoveBegin(x, y) => {
                 //console!(log, "move begin");
-                self.move_state.begin((x, y));
+                self.panning.begin((x, y));
                 false
             }
             Msg::MoveEnd => {
-                if self.move_state.is_moving() {
+                if self.panning.is_moving() {
                     //console!(log, "move end");
-                    let offset: Px = self.move_state.end().into();
+                    let offset: Px = self.panning.end().into();
                     self.center = self
                         .center
                         .px(self.zoom)
@@ -166,8 +166,8 @@ impl Renderable<Map> for Map {
         // make viewport
         // apply transform on middle of moving
         let mut c = self.center.px(self.zoom);
-        if self.move_state.is_moving() {
-            let offset_px: Px = self.move_state.offset().into();
+        if self.panning.is_moving() {
+            let offset_px: Px = self.panning.offset().into();
             c = c.translate(&offset_px.neg());
         }
         let vw = Viewport::new(&c.lonlat(self.zoom), (self.width, self.height), self.zoom);
