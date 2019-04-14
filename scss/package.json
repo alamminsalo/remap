@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "uikit": "^3.0.3"
+  },
+  "devDependencies": {
+    "@fortawesome/fontawesome-free": "^5.8.1",
+    "cssnano": "^4.1.10",
+    "parcel": "^1.12.3",
+    "sass": "^1.17.3"
+  }
+}

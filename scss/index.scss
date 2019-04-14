@@ -1,0 +1,51 @@
+@import "node_modules/@fortawesome/fontawesome-free/scss/fontawesome.scss";
+@import "node_modules/@fortawesome/fontawesome-free/scss/solid.scss";
+
+// uikit custom rules
+$button-default-background: whitesmoke;
+$button-default-hover-background: darken($button-default-background, 5%);
+
+@import "node_modules/uikit/src/scss/variables-theme.scss";
+@import "node_modules/uikit/src/scss/mixins-theme.scss";
+@import "node_modules/uikit/src/scss/uikit-theme.scss";
+
+%noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently supported by Chrome and Opera */
+}
+
+// custom styling
+.remap-zoom-controls {
+  @extend .uk-position-top-left;
+  @extend .uk-flex-inline;
+  @extend .uk-flex-column;
+}
+
+.remap-control {
+  margin: 0.1rem;
+  @extend %noselect;
+  @extend .uk-icon-button;
+  @extend .uk-button-default;
+  @extend .uk-button-small;
+  @extend .uk-border-rounded;
+}
+
+.remap-control-zoom-in {
+  &:before {
+    @extend %fa-icon;
+    @extend .fas;
+    @extend .fa-search-plus;
+  }
+}
+
+.remap-control-zoom-out {
+  &:before {
+    @extend %fa-icon;
+    @extend .fas;
+    @extend .fa-search-minus;
+  }
+}

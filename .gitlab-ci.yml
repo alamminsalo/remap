@@ -14,6 +14,18 @@ cache:
     - web/node_modules
     - web/.cache
 
+web_build:
+  image: node:latest
+  stage: build
+  script:
+    - cd web
+    - yarn
+    # bundle css
+    - yarn run parcel build -d ../static -o custom.css --no-source-maps index.scss
+  artifacts:
+    paths:
+      - static
+
 cargo_build:
   image: rust:1.33
   stage: build

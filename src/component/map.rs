@@ -35,6 +35,9 @@ pub struct Map {
 pub enum Msg {
     Init,
     Resize,
+    Noop,
+    // centers immediately to point
+    Go(Px),
     Move(i32, i32),
     MoveBegin(i32, i32),
     MoveEnd,
@@ -68,6 +71,7 @@ impl Component for Map {
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
+            Msg::Noop => false,
             Msg::Init => {
                 // make resize event handler
                 let cb = self.link.send_back(|_| Msg::Resize);
@@ -122,6 +126,12 @@ impl Component for Map {
                             .ok()
                     })
                     .is_some()
+            }
+            Msg::Go(px) => {
+                console!(log, &(px.x as i32), &(px.y as i32));
+                let vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
+                self.center = px.translate(&vw.pixels()).lonlat(self.zoom);
+                true
             }
             Msg::Move(x, y) => {
                 if self.panning.is_moving() {
@@ -178,14 +188,25 @@ impl Renderable<Map> for Map {
         html! {
             <div id={&self.id}, class="remap-map",>
                 <div class="remap-zoom-controls",>
-                    <div class="remap-control",><button onclick=|_| Msg::Zoom(z + 1),>{"+"}</button></div>
-                    <div class="remap-control",><button onclick=|_| Msg::Zoom(z - 1),>{"-"}</button></div>
+                    <i class="remap-control remap-control-zoom-in", onclick=|_| Msg::Zoom(z + 1),></i>
+                    <i class="remap-control remap-control-zoom-out", onclick=|_| Msg::Zoom(z - 1),></i>
                 </div>
                 <div class="remap-viewport",
                     onmousedown=|e| Msg::MoveBegin(e.screen_x(), e.screen_y()),
                     onmouseup=|_| Msg::MoveEnd,
                     onmouseleave=|_| Msg::MoveEnd,
-                    onmousemove=|e| Msg::Move(e.screen_x(), e.screen_y()),>
+                    ondoubleclick=|e| Msg::Go((e.offset_x(), e.offset_y()).into()),
+                    onmousemove=|e| Msg::Move(e.screen_x(), e.screen_y()),
+                   //  onmousewheel=|e| {
+                   //      if e.delta_y() > 10.0 {
+                   //          Msg::Zoom(z + 1)
+                   //      } else if e.delta_y() < -10.0 {
+                   //          Msg::Zoom(z - 1)
+                   //      } else {
+                   //          Msg::Noop
+                   //      }
+                   //  },
+                    >
                     // tile grid
                     <Grid: vw=vw, />
                 </div>

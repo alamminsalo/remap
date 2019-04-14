@@ -1,2 +1,8 @@
 /target
+/webfonts
+/scss/node_modules
+/static/fa-*
+/static/custom.css
 **/*.rs.bk
+**/.cache
+**/.DS_Store
