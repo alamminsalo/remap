@@ -20,6 +20,7 @@ scss_build:
   script:
     - cd scss
     - yarn
+    - cp -r node_modules/@fortawesome/fontawesome-free/webfonts ../webfonts
     # bundle css
     - yarn run parcel build -d ../static -o custom.css --no-source-maps index.scss
   artifacts:
