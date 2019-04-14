@@ -1,6 +1,6 @@
 /target
 /webfonts
-/scss/node_modules
+/web/node_modules
 /static/fa-*
 /static/custom.css
 /static/custom.js

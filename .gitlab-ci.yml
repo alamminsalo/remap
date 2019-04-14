@@ -11,14 +11,14 @@ cache:
   paths:
     - target
     - $CARGO_HOME
-    - scss/node_modules
-    - scss/.cache
+    - web/node_modules
+    - web/.cache
 
-scss_build:
+web:
   image: node:latest
   stage: build
   script:
-    - cd scss
+    - cd web
     - yarn
     - cp -r node_modules/@fortawesome/fontawesome-free/webfonts ../webfonts
     # bundle css
