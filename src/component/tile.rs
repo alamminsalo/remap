@@ -59,7 +59,7 @@ impl Renderable<Tile> for Tile {
         // make url
         let url = format!(
             // "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            "http://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.jpg90?apikey={key}",
+            "https://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.jpg90?apikey={key}",
             s = match self.tile.x % 3 {
                 0 => "a",
                 1 => "b",
