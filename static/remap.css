@@ -19,6 +19,7 @@
 
 .remap-tile-grid {
   position: absolute;
+  z-index: -1 !important;
 }
 
 .remap-tile-row {

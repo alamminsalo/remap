@@ -36,8 +36,8 @@ pub enum Msg {
     Init,
     Resize,
     Noop,
-    // centers immediately to point
-    Go(Px),
+    // centers immediately to point with given zoom
+    MoveTo(Px, i8),
     Move(i32, i32),
     MoveBegin(i32, i32),
     MoveEnd,
@@ -127,10 +127,11 @@ impl Component for Map {
                     })
                     .is_some()
             }
-            Msg::Go(px) => {
+            Msg::MoveTo(px, z) => {
                 console!(log, &(px.x as i32), &(px.y as i32));
                 let vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
-                self.center = px.translate(&vw.pixels()).lonlat(self.zoom);
+                self.center = vw.pixels().translate(&px).lonlat(self.zoom);
+                self.link.send_self(Msg::Zoom(z));
                 true
             }
             Msg::Move(x, y) => {
@@ -195,7 +196,7 @@ impl Renderable<Map> for Map {
                     onmousedown=|e| Msg::MoveBegin(e.screen_x(), e.screen_y()),
                     onmouseup=|_| Msg::MoveEnd,
                     onmouseleave=|_| Msg::MoveEnd,
-                    ondoubleclick=|e| Msg::Go((e.offset_x(), e.offset_y()).into()),
+                    ondoubleclick=|e| Msg::MoveTo((e.offset_x(), e.offset_y()).into(), z + 1),
                     onmousemove=|e| Msg::Move(e.screen_x(), e.screen_y()),
                    //  onmousewheel=|e| {
                    //      if e.delta_y() > 10.0 {

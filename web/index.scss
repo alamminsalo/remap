@@ -18,6 +18,10 @@ $button-default-hover-background: darken($button-default-background, 5%);
   user-select: none; /* Non-prefixed version, currently supported by Chrome and Opera */
 }
 
+%noevents {
+  pointer-events: none;
+}
+
 // custom styling
 .remap-zoom-controls {
   @extend .uk-position-top-left;
@@ -48,4 +52,9 @@ $button-default-hover-background: darken($button-default-background, 5%);
     @extend .fas;
     @extend .fa-search-minus;
   }
+}
+
+.remap-tile {
+  @extend %noselect;
+  @extend %noevents;
 }
