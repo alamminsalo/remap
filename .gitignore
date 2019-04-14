@@ -3,6 +3,7 @@
 /scss/node_modules
 /static/fa-*
 /static/custom.css
+/static/custom.js
 **/*.rs.bk
 **/.cache
 **/.DS_Store
