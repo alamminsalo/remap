@@ -11,14 +11,14 @@ cache:
   paths:
     - target
     - $CARGO_HOME
-    - web/node_modules
-    - web/.cache
+    - scss/node_modules
+    - scss/.cache
 
-web_build:
+scss_build:
   image: node:latest
   stage: build
   script:
-    - cd web
+    - cd scss
     - yarn
     # bundle css
     - yarn run parcel build -d ../static -o custom.css --no-source-maps index.scss
