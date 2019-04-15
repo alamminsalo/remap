@@ -1,7 +1,7 @@
 use super::Grid;
 use crate::model::position::{LonLat, Px};
 use crate::model::Viewport;
-use crate::state::panning;
+use crate::state::{inertia, panning};
 use stdweb::unstable::TryInto;
 use stdweb::web::event::{ITouchEvent, ResizeEvent, TouchEnd, TouchMove, TouchStart};
 use stdweb::web::{
@@ -10,10 +10,13 @@ use stdweb::web::{
 };
 use uuid::Uuid;
 use yew::events::IMouseEvent;
+use yew::services::render::{RenderService, RenderTask};
 use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
 
 pub struct Map {
     link: ComponentLink<Self>,
+    render: RenderService,
+    render_task: Option<RenderTask>,
 
     // inner state variables
     id: String,
@@ -24,12 +27,25 @@ pub struct Map {
 
     // state handlers
     panning: panning::State,
+    inertia: Option<inertia::State>,
 
     // dom callback handles
     resize_handle: Option<EventListenerHandle>,
     touchend_handle: Option<EventListenerHandle>,
     touchstart_handle: Option<EventListenerHandle>,
     touchmove_handle: Option<EventListenerHandle>,
+}
+
+impl Map {
+    fn finish_panning(&mut self) {
+        // end movement
+        let offset: Px = self.panning.end().into();
+        self.center = self
+            .center
+            .px(self.zoom)
+            .translate(&offset.neg())
+            .lonlat(self.zoom);
+    }
 }
 
 pub enum Msg {
@@ -41,6 +57,8 @@ pub enum Msg {
     Move(i32, i32),
     MoveBegin(i32, i32),
     MoveEnd,
+    MoveFinish,
+    Inertia(f64),
     Zoom(i8),
 }
 
@@ -51,6 +69,9 @@ impl Component for Map {
     fn create(_: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         link.send_self(Msg::Init);
         Map {
+            link: link,
+            render: RenderService::new(),
+            render_task: None,
             id: Uuid::new_v4().to_simple().to_string(),
             center: LonLat {
                 lon: 29.8,
@@ -60,7 +81,7 @@ impl Component for Map {
             width: 256,
             zoom: 13,
             panning: panning::State::default(),
-            link: link,
+            inertia: None,
             // handlers empty at first
             resize_handle: None,
             touchend_handle: None,
@@ -135,27 +156,48 @@ impl Component for Map {
                 true
             }
             Msg::Move(x, y) => {
-                if self.panning.is_moving() {
+                if self.panning.status() == panning::Status::Panning {
                     self.panning.set_position((x, y));
-                    //let pos = self.panning.offset();
-                    //console!(log, "move", &pos.0, &pos.1);
+                    true
+                } else {
+                    false
                 }
-                true
             }
             Msg::MoveBegin(x, y) => {
-                //console!(log, "move begin");
+                self.inertia = None;
+                if self.panning.status() != panning::Status::Idle {
+                    self.finish_panning();
+                }
                 self.panning.begin((x, y));
                 false
             }
             Msg::MoveEnd => {
-                if self.panning.is_moving() {
-                    //console!(log, "move end");
-                    let offset: Px = self.panning.end().into();
-                    self.center = self
-                        .center
-                        .px(self.zoom)
-                        .translate(&offset.neg())
-                        .lonlat(self.zoom);
+                if self.panning.status() == panning::Status::Panning {
+                    self.inertia = Some(inertia::State::begin(self.panning.release()));
+                    self.link.send_self(Msg::Inertia(0.0));
+                }
+                true
+            }
+            Msg::MoveFinish => {
+                self.inertia = None;
+                // console!(log, "move end");
+                self.finish_panning();
+                true
+            }
+            Msg::Inertia(dt) => {
+                if let Some(ref mut inertia) = self.inertia {
+                    self.panning.add_relative(inertia.tick(dt));
+                    match inertia.status() {
+                        inertia::Status::InProgress => {
+                            self.render_task = Some(self.render.request_animation_frame(
+                                self.link.send_back(|dt| Msg::Inertia(dt / 1e6)),
+                            ));
+                        }
+                        inertia::Status::Ended => {
+                            self.render_task = None;
+                            self.link.send_self(Msg::MoveFinish);
+                        }
+                    }
                     true
                 } else {
                     false
@@ -177,7 +219,7 @@ impl Renderable<Map> for Map {
         // make viewport
         // apply transform on middle of moving
         let mut c = self.center.px(self.zoom);
-        if self.panning.is_moving() {
+        if self.panning.status() != panning::Status::Idle {
             let offset_px: Px = self.panning.offset().into();
             c = c.translate(&offset_px.neg());
         }
