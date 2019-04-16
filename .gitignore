@@ -1,5 +1,5 @@
 /target
-/webfonts
+**/webfonts
 /web/node_modules
 /static/fa-*
 /static/custom.css

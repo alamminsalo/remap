@@ -20,9 +20,9 @@ web:
   script:
     - cd web
     - yarn
-    - cp -r node_modules/@fortawesome/fontawesome-free/webfonts ../webfonts
+    - cp -r node_modules/@fortawesome/fontawesome-free/webfonts ../static/webfonts
     # bundle css
-    - yarn run parcel build -d ../static -o custom.css --no-source-maps index.scss
+    - yarn run sass --no-source-map -s compressed index.scss ../static/custom.css
   artifacts:
     paths:
       - static
