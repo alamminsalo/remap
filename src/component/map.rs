@@ -52,12 +52,11 @@ pub enum Msg {
     Init,
     Resize,
     Noop,
-    // centers immediately to point with given zoom
-    MoveTo(Px, i8),
-    Move(i32, i32),
-    MoveBegin(i32, i32),
+    Goto(Px, i8), // centers immediately to point with given zoom
+    Pan(f64, f64),
+    PanBegin(f64, f64),
+    PanRelease,
     MoveEnd,
-    MoveFinish,
     Inertia(f64),
     Zoom(i8),
 }
@@ -102,25 +101,23 @@ impl Component for Map {
                 // touch start
                 let cb = self.link.send_back(|e: TouchStart| {
                     match e.target_touches().iter().next() {
-                        Some(touch) => {
-                            Msg::MoveBegin(touch.screen_x() as i32, touch.screen_y() as i32)
-                        }
-                        _ => Msg::MoveEnd, // may end panning if no touches found
+                        Some(touch) => Msg::PanBegin(touch.screen_x(), touch.screen_y()),
+                        _ => Msg::PanRelease, // may end panning if no touches found
                     }
                 });
                 self.touchstart_handle =
                     Some(window().add_event_listener(move |e: TouchStart| cb.emit(e)));
 
                 // touch end
-                let cb = self.link.send_back(|_| Msg::MoveEnd);
+                let cb = self.link.send_back(|_| Msg::PanRelease);
                 self.touchend_handle =
                     Some(window().add_event_listener(move |_: TouchEnd| cb.emit(())));
 
                 // touch move
                 let cb = self.link.send_back(|e: TouchMove| {
                     match e.target_touches().iter().next() {
-                        Some(touch) => Msg::Move(touch.screen_x() as i32, touch.screen_y() as i32),
-                        _ => Msg::MoveEnd, // may end panning if no touches found
+                        Some(touch) => Msg::Pan(touch.screen_x(), touch.screen_y()),
+                        _ => Msg::PanRelease, // may end panning if no touches found
                     }
                 });
                 self.touchmove_handle =
@@ -148,14 +145,14 @@ impl Component for Map {
                     })
                     .is_some()
             }
-            Msg::MoveTo(px, z) => {
+            Msg::Goto(px, z) => {
                 console!(log, &(px.x as i32), &(px.y as i32));
                 let vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
                 self.center = vw.pixels().translate(&px).lonlat(self.zoom);
                 self.link.send_self(Msg::Zoom(z));
                 true
             }
-            Msg::Move(x, y) => {
+            Msg::Pan(x, y) => {
                 if self.panning.status() == panning::Status::Panning {
                     self.panning.set_position((x, y));
                     true
@@ -163,7 +160,7 @@ impl Component for Map {
                     false
                 }
             }
-            Msg::MoveBegin(x, y) => {
+            Msg::PanBegin(x, y) => {
                 self.inertia = None;
                 if self.panning.status() != panning::Status::Idle {
                     self.finish_panning();
@@ -171,14 +168,14 @@ impl Component for Map {
                 self.panning.begin((x, y));
                 false
             }
-            Msg::MoveEnd => {
+            Msg::PanRelease => {
                 if self.panning.status() == panning::Status::Panning {
                     self.inertia = Some(inertia::State::begin(self.panning.release()));
                     self.link.send_self(Msg::Inertia(0.0));
                 }
                 true
             }
-            Msg::MoveFinish => {
+            Msg::MoveEnd => {
                 self.inertia = None;
                 // console!(log, "move end");
                 self.finish_panning();
@@ -195,7 +192,7 @@ impl Component for Map {
                         }
                         inertia::Status::Ended => {
                             self.render_task = None;
-                            self.link.send_self(Msg::MoveFinish);
+                            self.link.send_self(Msg::MoveEnd);
                         }
                     }
                     true
@@ -235,11 +232,11 @@ impl Renderable<Map> for Map {
                     <i class="remap-control remap-control-zoom-out", onclick=|_| Msg::Zoom(z - 1),></i>
                 </div>
                 <div class="remap-viewport",
-                    onmousedown=|e| Msg::MoveBegin(e.screen_x(), e.screen_y()),
-                    onmouseup=|_| Msg::MoveEnd,
-                    onmouseleave=|_| Msg::MoveEnd,
-                    ondoubleclick=|e| Msg::MoveTo((e.offset_x(), e.offset_y()).into(), z + 1),
-                    onmousemove=|e| Msg::Move(e.screen_x(), e.screen_y()),
+                    onmousedown=|e| Msg::PanBegin(e.screen_x() as f64, e.screen_y() as f64),
+                    onmouseup=|_| Msg::PanRelease,
+                    onmouseleave=|_| Msg::PanRelease,
+                    ondoubleclick=|e| Msg::Goto((e.offset_x(), e.offset_y()).into(), z + 1),
+                    onmousemove=|e| Msg::Pan(e.screen_x() as f64, e.screen_y() as f64),
                    //  onmousewheel=|e| {
                    //      if e.delta_y() > 10.0 {
                    //          Msg::Zoom(z + 1)

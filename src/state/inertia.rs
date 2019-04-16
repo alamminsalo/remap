@@ -17,7 +17,7 @@ impl State {
             velocity,
         }
     }
-    pub fn tick(&mut self, dt: f64) -> (i32, i32) {
+    pub fn tick(&mut self, dt: f64) -> (f64, f64) {
         // slow movement
         let slow = self.slow_factor * (1.0 - dt);
         self.velocity.0 *= slow;
@@ -28,10 +28,7 @@ impl State {
             self.status = Status::Ended;
         }
 
-        (
-            self.velocity.0.round() as i32,
-            self.velocity.1.round() as i32,
-        )
+        self.velocity
     }
     pub fn status(&self) -> Status {
         self.status
