@@ -12,7 +12,7 @@ pub struct State {
 impl State {
     /// Resets state with a starting velocity
     pub fn begin(velocity: (f64, f64)) -> Self {
-        console!(log, "apply inertia", &velocity.0, &velocity.1);
+        // console!(log, "apply inertia", &velocity.0, &velocity.1);
         Self {
             status: Status::InProgress,
             slow_factor: 0.92,

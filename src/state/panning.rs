@@ -45,14 +45,14 @@ impl State {
         let dt = (now - self.time).max(1.0);
         let o = self.offset();
         self.velocity = (o.0 as f64 / dt, o.1 as f64 / dt);
-        console!(
-            log,
-            "dt",
-            &dt,
-            "velocity",
-            &self.velocity.0,
-            &self.velocity.1
-        );
+        // console!(
+        //     log,
+        //     "dt",
+        //     &dt,
+        //     "velocity",
+        //     &self.velocity.0,
+        //     &self.velocity.1
+        // );
         self.time = now;
     }
     /// Adds relative positioning, this does not update current velocity.
