@@ -1,4 +1,4 @@
-#[derive(PartialEq, Clone, Copy)]
+#[derive(Default, PartialEq, Clone, Copy)]
 pub struct State {
     // status which tells if moving is in progress
     status: Status,

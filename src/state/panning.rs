@@ -38,10 +38,12 @@ impl State {
         self.position = xy;
 
         // buildup velocity
-        let dt = Date::now() - self.time;
+        let now = Date::now();
+        let dt = now - self.time;
+        console!(log, &dt);
         let o = self.offset();
         self.velocity = (o.0 as f64 / dt, o.1 as f64 / dt);
-        self.time += dt;
+        self.time = now;
     }
     pub fn add_relative(&mut self, xy: (f64, f64)) {
         self.position.0 += xy.0;

@@ -11,6 +11,7 @@ use stdweb::web::{
 use uuid::Uuid;
 use yew::events::IMouseEvent;
 use yew::services::render::{RenderService, RenderTask};
+use yew::services::Task;
 use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
 
 pub struct Map {
@@ -27,7 +28,7 @@ pub struct Map {
 
     // state handlers
     panning: panning::State,
-    inertia: Option<inertia::State>,
+    inertia: inertia::State,
 
     // dom callback handles
     resize_handle: Option<EventListenerHandle>,
@@ -57,7 +58,7 @@ pub enum Msg {
     PanBegin(f64, f64),
     PanRelease,
     MoveEnd,
-    Inertia(f64),
+    Decelerate(f64),
     Zoom(i8),
 }
 
@@ -80,7 +81,7 @@ impl Component for Map {
             width: 256,
             zoom: 13,
             panning: panning::State::default(),
-            inertia: None,
+            inertia: Default::default(),
             // handlers empty at first
             resize_handle: None,
             touchend_handle: None,
@@ -161,7 +162,6 @@ impl Component for Map {
                 }
             }
             Msg::PanBegin(x, y) => {
-                self.inertia = None;
                 if self.panning.status() != panning::Status::Idle {
                     self.finish_panning();
                 }
@@ -170,35 +170,33 @@ impl Component for Map {
             }
             Msg::PanRelease => {
                 if self.panning.status() == panning::Status::Panning {
-                    self.inertia = Some(inertia::State::begin(self.panning.release()));
-                    self.link.send_self(Msg::Inertia(0.0));
+                    self.inertia = inertia::State::begin(self.panning.release());
+                    self.link.send_self(Msg::Decelerate(0.0));
                 }
                 true
             }
             Msg::MoveEnd => {
-                self.inertia = None;
                 // console!(log, "move end");
                 self.finish_panning();
                 true
             }
-            Msg::Inertia(dt) => {
-                if let Some(ref mut inertia) = self.inertia {
-                    self.panning.add_relative(inertia.tick(dt));
-                    match inertia.status() {
-                        inertia::Status::InProgress => {
-                            self.render_task = Some(self.render.request_animation_frame(
-                                self.link.send_back(|dt| Msg::Inertia(dt / 1e6)),
-                            ));
-                        }
-                        inertia::Status::Ended => {
-                            self.render_task = None;
-                            self.link.send_self(Msg::MoveEnd);
-                        }
+            Msg::Decelerate(dt) => {
+                self.panning.add_relative(self.inertia.tick(dt));
+                match self.inertia.status() {
+                    inertia::Status::InProgress => {
+                        self.render_task = Some(self.render.request_animation_frame(
+                            self.link.send_back(|dt| Msg::Decelerate(dt / 1e6)),
+                        ));
                     }
-                    true
-                } else {
-                    false
+                    inertia::Status::Ended => {
+                        if let Some(ref mut task) = self.render_task {
+                            task.cancel();
+                        }
+                        self.render_task = None;
+                        self.link.send_self(Msg::MoveEnd);
+                    }
                 }
+                true
             }
             Msg::Zoom(z) => {
                 //console!(log, "zoom");
