@@ -85,12 +85,10 @@ impl Component for Map {
             inertia: Default::default(),
             // add single raster layer as default
             // TODO: parametrize
-            layers: layer::State::new(vec![
-                TileLayer::new(
-                    "https://tile.thunderforest.com/neighbourhood",
-                    ".png?apikey=9d61ff3f272b4bbaa7d9c0f63ad34177",
-                ),
-            ]),
+            layers: layer::State::new(vec![TileLayer::new(
+                "https://tile.thunderforest.com/neighbourhood",
+                ".png?apikey=9d61ff3f272b4bbaa7d9c0f63ad34177",
+            )]),
             // handlers empty at first
             resize_handle: None,
             touchend_handle: None,

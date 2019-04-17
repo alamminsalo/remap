@@ -29,6 +29,12 @@ impl State {
     /// which can be used to start inertia state.
     pub fn release(&mut self) -> (f64, f64) {
         self.status = Status::Free;
+
+        // check that the last velocity is current enought, otherwise reset it
+        if Date::now() - self.time > 50.0 {
+            self.velocity = (0.0, 0.0);
+        }
+
         self.velocity
     }
     /// Ends state. Returns position
