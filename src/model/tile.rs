@@ -62,3 +62,34 @@ impl Tile {
         ll.px(self.z)
     }
 }
+
+/// Raster tile layer
+#[derive(Default, PartialEq, Clone)]
+pub struct TileLayer {
+    /// Tile url
+    pub url: String,
+    /// Tile url suffix eg. '.png?apikey=foobar'
+    pub suffix: String,
+    /// Controls whether layer is visible on map
+    pub visible: bool,
+}
+
+impl TileLayer {
+    pub fn new(url: &str, suffix: &str) -> Self {
+        Self {
+            url: url.into(),
+            suffix: suffix.into(),
+            visible: true,
+        }
+    }
+    pub fn tile_url(&self, tile: &Tile) -> String {
+        format!(
+            "{url}/{z}/{x}/{y}{suffix}",
+            url = &self.url,
+            z = tile.z,
+            x = tile.x,
+            y = tile.y,
+            suffix = &self.suffix,
+        )
+    }
+}

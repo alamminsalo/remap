@@ -2,7 +2,7 @@ pub mod position;
 pub mod tile;
 pub mod viewport;
 
-pub use tile::Tile;
+pub use tile::{Tile, TileLayer};
 pub use viewport::Viewport;
 
 #[cfg(test)]

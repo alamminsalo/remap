@@ -1,7 +1,7 @@
 use super::Grid;
 use crate::model::position::{LonLat, Px};
-use crate::model::Viewport;
-use crate::state::{inertia, panning};
+use crate::model::{TileLayer, Viewport};
+use crate::state::{inertia, layer, panning};
 use stdweb::unstable::TryInto;
 use stdweb::web::event::{ITouchEvent, ResizeEvent, TouchEnd, TouchMove, TouchStart};
 use stdweb::web::{
@@ -23,12 +23,13 @@ pub struct Map {
     id: String,
     center: LonLat,
     zoom: usize,
-    width: i32,  // pixels
-    height: i32, // pixels
+    width: i32,  // element width in pixels
+    height: i32, // element height in pixels
 
     // state handlers
     panning: panning::State,
     inertia: inertia::State,
+    layers: layer::State,
 
     // dom callback handles
     resize_handle: Option<EventListenerHandle>,
@@ -80,8 +81,20 @@ impl Component for Map {
             height: 256,
             width: 256,
             zoom: 13,
-            panning: panning::State::default(),
+            panning: Default::default(),
             inertia: Default::default(),
+            // add single raster layer as default
+            // TODO: parametrize
+            layers: layer::State::new(vec![
+                TileLayer::new(
+                    "https://tile.thunderforest.com/transport",
+                    ".png?apikey=9d61ff3f272b4bbaa7d9c0f63ad34177",
+                ),
+                TileLayer::new(
+                    "https://tile.thunderforest.com/neighbourhood",
+                    ".png?apikey=9d61ff3f272b4bbaa7d9c0f63ad34177",
+                ),
+            ]),
             // handlers empty at first
             resize_handle: None,
             touchend_handle: None,
@@ -222,6 +235,8 @@ impl Renderable<Map> for Map {
 
         // zoomlevel
         let z = self.zoom as i8;
+        // visible layers
+        let visible_layers = self.layers.layers_by_visibility(true);
 
         html! {
             <div id={&self.id}, class="remap-map",>
@@ -234,19 +249,9 @@ impl Renderable<Map> for Map {
                     onmouseup=|_| Msg::PanRelease,
                     onmouseleave=|_| Msg::PanRelease,
                     ondoubleclick=|e| Msg::Goto((e.offset_x(), e.offset_y()).into(), z + 1),
-                    onmousemove=|e| Msg::Pan(e.screen_x() as f64, e.screen_y() as f64),
-                   //  onmousewheel=|e| {
-                   //      if e.delta_y() > 10.0 {
-                   //          Msg::Zoom(z + 1)
-                   //      } else if e.delta_y() < -10.0 {
-                   //          Msg::Zoom(z - 1)
-                   //      } else {
-                   //          Msg::Noop
-                   //      }
-                   //  },
-                    >
-                    // tile grid
-                    <Grid: vw=vw, />
+                    onmousemove=|e| Msg::Pan(e.screen_x() as f64, e.screen_y() as f64),>
+                    // layer grids
+                    <Grid: vw=vw, layers=visible_layers, />
                 </div>
             </div>
         }

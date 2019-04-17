@@ -1,49 +1,33 @@
-use crate::model::Tile as TileModel;
-use yew::{html, Callback, Component, ComponentLink, Html, Renderable, ShouldRender};
+use crate::model::{Tile as TileModel, TileLayer};
+use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
 
 pub struct Tile {
     tile: TileModel,
-    on_clicked: Option<Callback<()>>,
+    layer: TileLayer,
 }
 
-pub enum Msg {
-    Clicked,
-}
+pub enum Msg {}
 
-#[derive(PartialEq, Clone)]
+#[derive(Default, PartialEq, Clone)]
 pub struct Prop {
     pub tile: TileModel,
-    pub on_clicked: Option<Callback<()>>,
-}
-
-impl Default for Prop {
-    fn default() -> Self {
-        Self {
-            tile: TileModel::default(),
-            on_clicked: None,
-        }
-    }
+    pub layer: TileLayer,
 }
 
 impl Component for Tile {
     type Message = Msg;
     type Properties = Prop;
 
-    fn create(props: Self::Properties, _: ComponentLink<Self>) -> Self {
+    fn create(prop: Self::Properties, _: ComponentLink<Self>) -> Self {
         Tile {
-            tile: props.tile,
-            on_clicked: props.on_clicked,
+            tile: prop.tile,
+            layer: prop.layer,
         }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            Msg::Clicked => {
-                if let Some(ref mut callback) = self.on_clicked {
-                    callback.emit(());
-                }
-                true
-            }
+            _ => false,
         }
     }
 
@@ -56,23 +40,8 @@ impl Component for Tile {
 
 impl Renderable<Tile> for Tile {
     fn view(&self) -> Html<Self> {
-        // make url
-        let url = format!(
-            // "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            "https://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.jpg90?apikey={key}",
-            s = match self.tile.x % 3 {
-                0 => "a",
-                1 => "b",
-                _ => "c",
-            },
-            z = self.tile.z,
-            x = self.tile.x,
-            y = self.tile.y,
-            key = "9d61ff3f272b4bbaa7d9c0f63ad34177",
-        );
-
         html! {
-            <span class="remap-tile", style={&format!("background-image: url({})",&url)}, />
+            <span class="remap-tile", style={&format!("background-image: url({})",&self.layer.tile_url(&self.tile))}, />
         }
     }
 }
