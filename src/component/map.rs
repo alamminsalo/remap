@@ -87,10 +87,6 @@ impl Component for Map {
             // TODO: parametrize
             layers: layer::State::new(vec![
                 TileLayer::new(
-                    "https://tile.thunderforest.com/transport",
-                    ".png?apikey=9d61ff3f272b4bbaa7d9c0f63ad34177",
-                ),
-                TileLayer::new(
                     "https://tile.thunderforest.com/neighbourhood",
                     ".png?apikey=9d61ff3f272b4bbaa7d9c0f63ad34177",
                 ),
