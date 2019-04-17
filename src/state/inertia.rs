@@ -1,3 +1,4 @@
+/// State struct with implementation for calculating a decelerating velocity
 #[derive(Default, PartialEq, Clone, Copy)]
 pub struct State {
     // status which tells if moving is in progress
@@ -9,14 +10,18 @@ pub struct State {
 }
 
 impl State {
+    /// Resets state with a starting velocity
     pub fn begin(velocity: (f64, f64)) -> Self {
-        // console!(log, "apply inertia", &velocity.0, &velocity.1);
+        console!(log, "apply inertia", &velocity.0, &velocity.1);
         Self {
             status: Status::InProgress,
             slow_factor: 0.92,
             velocity,
         }
     }
+
+    /// Ticks state with a time delta number.
+    /// Returns calculated velocity.
     pub fn tick(&mut self, dt: f64) -> (f64, f64) {
         // slow movement
         let slow = self.slow_factor * (1.0 - dt);
@@ -30,6 +35,8 @@ impl State {
 
         self.velocity
     }
+
+    /// Returns current inertia status
     pub fn status(&self) -> Status {
         self.status
     }
