@@ -83,7 +83,7 @@ impl Renderable<Grid> for Grid {
     fn view(&self) -> Html<Self> {
         html! {
             <div class="remap-tile-grid remap-noselect", draggable="false",
-                style={format!("left: {}px; top: {}px", &self.tile_offset.x, &self.tile_offset.y)},>
+                style={format!("transform: translate({}px, {}px)", &self.tile_offset.x, &self.tile_offset.y)},>
                     { for self.layers.iter().map(|l| tile_layer(l, &self.tile_rows)) }
             </div>
         }
