@@ -156,7 +156,7 @@ impl Component for Map {
                     .is_some()
             }
             Msg::Goto(px, z) => {
-                console!(log, &(px.x as i32), &(px.y as i32));
+                // console!(log, &(px.x as i32), &(px.y as i32));
                 let vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
                 self.center = vw.pixels().translate(&px).lonlat(self.zoom);
                 self.link.send_self(Msg::Zoom(z));
