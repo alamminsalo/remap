@@ -6,9 +6,12 @@ $fa-font-path: "./webfonts";
 @import "node_modules/@fortawesome/fontawesome-free/scss/solid.scss";
 
 // uikit custom rules
-$button-default-background: whitesmoke;
-$button-default-hover-background: darken($button-default-background, 5%);
+$global-muted-background: whitesmoke;
+$global-primary-background: #8ebee2;
+$global-border: #8ebee2;
+$global-border-width: 2px;
 
+@import "node_modules/uikit/src/scss/variables.scss";
 @import "node_modules/uikit/src/scss/variables-theme.scss";
 @import "node_modules/uikit/src/scss/mixins-theme.scss";
 @import "node_modules/uikit/src/scss/uikit-theme.scss";
