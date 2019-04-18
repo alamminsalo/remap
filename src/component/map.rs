@@ -11,7 +11,6 @@ use stdweb::web::{
 use uuid::Uuid;
 use yew::events::IMouseEvent;
 use yew::services::render::{RenderService, RenderTask};
-use yew::services::Task;
 use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
 
 pub struct Map {
@@ -188,17 +187,16 @@ impl Component for Map {
                 true
             }
             Msg::Decelerate(dt) => {
-                self.panning.add_relative(self.inertia.tick(dt));
+                // console!(log, "decelerate", &dt);
+                self.panning.add_relative(self.inertia.tick(dt / 1e6));
                 match self.inertia.status() {
                     inertia::Status::InProgress => {
+                        let t0: f64 = js! { return performance.now(); }.try_into().unwrap_or(0.0);
                         self.render_task = Some(self.render.request_animation_frame(
-                            self.link.send_back(|dt| Msg::Decelerate(dt / 1e6)),
+                            self.link.send_back(move |t1| Msg::Decelerate(t1 - t0)),
                         ));
                     }
                     inertia::Status::Ended => {
-                        if let Some(ref mut task) = self.render_task {
-                            task.cancel();
-                        }
                         self.render_task = None;
                         self.link.send_self(Msg::MoveEnd);
                     }
