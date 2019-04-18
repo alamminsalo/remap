@@ -20,6 +20,7 @@
 .remap-tile-grid {
   position: absolute;
   z-index: -1 !important;
+  transform-origin: center center;
 }
 
 .remap-tile-layer {

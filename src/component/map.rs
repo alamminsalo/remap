@@ -177,7 +177,8 @@ impl Component for Map {
             Msg::PanRelease => {
                 if self.panning.status() == panning::Status::Panning {
                     self.inertia = inertia::State::begin(self.panning.release());
-                    self.link.send_self(Msg::Decelerate(0.0, 0.0));
+                    let pn: f64 = js! { return performance.now(); }.try_into().unwrap_or(0.0);
+                    self.link.send_self(Msg::Decelerate(pn, pn));
                 }
                 true
             }
