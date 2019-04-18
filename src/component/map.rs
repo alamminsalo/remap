@@ -58,7 +58,7 @@ pub enum Msg {
     PanBegin(f64, f64),
     PanRelease,
     MoveEnd,
-    Decelerate(f64),
+    Decelerate(f64, f64),
     Zoom(i8),
 }
 
@@ -177,7 +177,7 @@ impl Component for Map {
             Msg::PanRelease => {
                 if self.panning.status() == panning::Status::Panning {
                     self.inertia = inertia::State::begin(self.panning.release());
-                    self.link.send_self(Msg::Decelerate(0.0));
+                    self.link.send_self(Msg::Decelerate(0.0, 0.0));
                 }
                 true
             }
@@ -186,14 +186,14 @@ impl Component for Map {
                 self.finish_panning();
                 true
             }
-            Msg::Decelerate(dt) => {
+            Msg::Decelerate(t1, t0) => {
+                let dt = t1 - t0;
                 // console!(log, "decelerate", &dt);
                 self.panning.add_relative(self.inertia.tick(dt / 1e6));
                 match self.inertia.status() {
                     inertia::Status::InProgress => {
-                        let t0: f64 = js! { return performance.now(); }.try_into().unwrap_or(0.0);
                         self.render_task = Some(self.render.request_animation_frame(
-                            self.link.send_back(move |t1| Msg::Decelerate(t1 - t0)),
+                            self.link.send_back(move |t2| Msg::Decelerate(t2, t1)),
                         ));
                     }
                     inertia::Status::Ended => {
