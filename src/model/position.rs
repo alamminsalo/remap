@@ -92,6 +92,14 @@ impl Px {
             y: self.y + other.y,
         }
     }
+
+    // normalize to +- size by whether is positive or negative
+    pub fn normalize(&self, size: i64) -> Self {
+        Self {
+            x: if self.x.is_positive() { size } else { -size },
+            y: if self.y.is_positive() { size } else { -size },
+        }
+    }
 }
 
 impl Into<(i64, i64)> for Px {

@@ -217,15 +217,19 @@ impl Component for Map {
 
 impl Renderable<Map> for Map {
     fn view(&self) -> Html<Self> {
-        // make viewport
-        // apply transform on middle of moving
-        let mut c = self.center.px(self.zoom);
-        if self.panning.status() != panning::Status::Idle {
-            let offset_px: Px = self.panning.offset().into();
-            c = c.translate(&offset_px.neg());
-        }
-        let vw = Viewport::new(&c.lonlat(self.zoom), (self.width + 512, self.height + 512), self.zoom);
+        // make viewports
+        let mut vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
+        let mut vw_outer: Viewport = vw.clone();
 
+        // apply transforms when panning map
+        // TODO: investigate if this impacts performance to do so many calculations on the view
+        // function
+        if self.panning.status() != panning::Status::Idle {
+            let offset: Px = self.panning.offset().into();
+            vw = vw.translate(&offset);
+            // resize outer viewport accordingly
+            vw_outer = vw.resize_keep_min_bounds(offset.neg().normalize(256));
+        }
         // zoomlevel
         let z = self.zoom as i8;
         // visible layers
@@ -244,7 +248,7 @@ impl Renderable<Map> for Map {
                     ondoubleclick=|e| Msg::Goto((e.offset_x(), e.offset_y()).into(), z + 1),
                     onmousemove=|e| Msg::Pan(e.screen_x() as f64, e.screen_y() as f64),>
                     // layer grids
-                    <Grid: vw=vw, layers=visible_layers, center=c, height=self.height, width=self.width, />
+                    <Grid: vw=vw, vw_outer=vw_outer, layers=visible_layers, />
                 </div>
             </div>
         }

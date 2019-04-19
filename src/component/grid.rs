@@ -6,27 +6,15 @@ use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
 
 /// OSM Raster tile grid
 pub struct Grid {
-    // viewport
+    // inner visible viewport
     vw: Viewport,
-    center: Px,
-    height: i32,
-    width: i32,
-    // rows of tiles
-    tile_rows: Vec<Vec<TileModel>>,
-    // dom offset from parent
-    tile_offset: Px,
+    // outer viewport, used to fetch tiles
+    vw_outer: Viewport,
     // layers to draw
     layers: Vec<TileLayer>,
 }
 
 impl Grid {
-    /// recalculates rows and offset for self
-    fn recalculate(&mut self, vw: &Viewport) {
-        self.vw = vw.clone();
-        self.tile_rows = Self::tile_rows(&vw);
-        self.tile_offset = Self::tile_offset(&vw, &self.center, self.height, self.width);
-    }
-
     fn tile_rows(vw: &Viewport) -> Vec<Vec<TileModel>> {
         // group by rows
         let mut tile_rows = vec![];
@@ -36,12 +24,12 @@ impl Grid {
         tile_rows
     }
 
-    // returns pixel offset from viewport
-    fn tile_offset(vw: &Viewport, center: &Px, width: i32, height: i32) -> Px {
-        // take nw tile of viewport
-        let tile_px = TileModel::from_lonlat(vw.lon_min, vw.lat_max, vw.z).pixels();
-        // take distance to actual visible viewport
-        tile_px.distance(&center.translate(&(-width / 2, -height / 2).into()))
+    // returns pixel offset between viewports
+    fn tile_offset(vw: &Viewport, vw_outer: &Viewport) -> Px {
+        // take nw tile of outer viewport
+        let tile = TileModel::from_lonlat(vw_outer.lon_min, vw_outer.lat_max, vw.z);
+        // return pixel offset from inner viewport
+        vw.pixel_offset(&tile)
     }
 }
 
@@ -50,10 +38,8 @@ pub enum Msg {}
 #[derive(PartialEq, Clone, Default)]
 pub struct Prop {
     pub vw: Viewport,
+    pub vw_outer: Viewport,
     pub layers: Vec<TileLayer>,
-    pub center: Px,
-    pub height: i32,
-    pub width: i32,
 }
 
 impl Component for Grid {
@@ -62,12 +48,8 @@ impl Component for Grid {
 
     fn create(prop: Self::Properties, _: ComponentLink<Self>) -> Self {
         Grid {
-            tile_rows: Grid::tile_rows(&prop.vw),
-            tile_offset: Grid::tile_offset(&prop.vw, &prop.center, prop.height, prop.width),
             vw: prop.vw,
-            center: prop.center,
-            height: prop.height,
-            width: prop.width,
+            vw_outer: prop.vw_outer,
             layers: prop.layers,
         }
     }
@@ -79,10 +61,8 @@ impl Component for Grid {
     fn change(&mut self, prop: Self::Properties) -> ShouldRender {
         let mut changed = false;
         if self.vw != prop.vw {
-            self.center = prop.center;
-            self.width = prop.width;
-            self.height = prop.height;
-            self.recalculate(&prop.vw);
+            self.vw = prop.vw;
+            self.vw_outer = prop.vw_outer;
             changed = true;
         }
         if self.layers != prop.layers {
@@ -95,10 +75,12 @@ impl Component for Grid {
 
 impl Renderable<Grid> for Grid {
     fn view(&self) -> Html<Self> {
+        let tile_rows = Grid::tile_rows(&self.vw_outer);
+        let tile_offset = Grid::tile_offset(&self.vw, &self.vw_outer);
         html! {
             <div class="remap-tile-grid remap-noselect", draggable="false",
-                style={format!("transform: translate({}px, {}px)", &self.tile_offset.x, &self.tile_offset.y)},>
-                    { for self.layers.iter().map(|l| tile_layer(l, &self.tile_rows)) }
+                style={format!("transform: translate({}px, {}px)", &tile_offset.x, &tile_offset.y)},>
+                    { for self.layers.iter().map(|l| tile_layer(l, &tile_rows)) }
             </div>
         }
     }

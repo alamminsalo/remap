@@ -30,8 +30,8 @@ impl Viewport {
         }
     }
 
-    // translates by given pixel amount
-    pub fn translate(&self, xy: Px) -> Viewport {
+    /// Translates by given pixel amount
+    pub fn translate(&self, xy: &Px) -> Viewport {
         // translated pixels
         let px: Px = self.pixels().translate(&xy);
 
@@ -51,7 +51,7 @@ impl Viewport {
         }
     }
 
-    // Returns center of this viewport
+    /// Returns center of this viewport
     pub fn center(&self) -> LonLat {
         // nw pixel corner
         let nw_px = self.pixels();
@@ -61,8 +61,8 @@ impl Viewport {
         nw_px.avg(&se.px(self.z)).lonlat(self.z)
     }
 
-    // returns osm tiles that intersect with this viewport
-    // https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Mathematics
+    /// Returns osm tiles that intersect with this viewport
+    /// https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Mathematics
     pub fn tiles(&self) -> impl Iterator<Item = Tile> {
         let z = self.z;
         let a = Tile::from_lonlat(self.lon_min, self.lat_max, z);
@@ -72,14 +72,45 @@ impl Viewport {
         iproduct!(a.y..b.y, a.x..b.x).map(move |(y, x)| Tile { x, y, z })
     }
 
-    // calculates pixel offset for tile
+    /// Calculates pixel offset for tile
     pub fn pixel_offset(&self, tile: &Tile) -> Px {
         tile.pixels().distance(&self.pixels())
     }
 
-    // get pixel coordinates (NW corner)
+    /// Get pixel coordinates (NW corner)
     pub fn pixels(&self) -> Px {
         let ll: LonLat = (self.lon_min, self.lat_max).into();
         ll.px(self.z)
+    }
+
+    /// Returns pixel coordinates for both nw, se borders
+    pub fn pixel_bounds(&self) -> (Px, Px) {
+        let nw: LonLat = (self.lon_min, self.lat_max).into();
+        let se: LonLat = (self.lon_max, self.lat_min).into();
+        (nw.px(self.z), se.px(self.z))
+    }
+
+    /// Creates viewport from pixel bounds and zoom level
+    pub fn from_pixel_bounds(nw: Px, se: Px, z: usize) -> Self {
+        let nw_ll = nw.lonlat(z);
+        let se_ll = se.lonlat(z);
+
+        Self {
+            lon_min: nw_ll.lon,
+            lat_max: nw_ll.lat,
+            lon_max: se_ll.lon,
+            lat_min: se_ll.lat,
+            z: z,
+        }
+    }
+
+    pub fn resize_keep_min_bounds(&self, offset: Px) -> Self {
+        // resize outer viewport accordingly
+        let (mut nw, mut se) = self.pixel_bounds();
+        nw.x = (nw.x + offset.x).min(nw.x);
+        nw.y = (nw.y + offset.y).min(nw.y);
+        se.x = (se.x + offset.x).max(se.x);
+        se.y = (se.y + offset.y).max(se.y);
+        Viewport::from_pixel_bounds(nw, se, self.z)
     }
 }
