@@ -79,7 +79,7 @@ impl Component for Map {
             },
             height: 256,
             width: 256,
-            zoom: 13,
+            zoom: 4,
             panning: Default::default(),
             inertia: Default::default(),
             // add single raster layer as default
