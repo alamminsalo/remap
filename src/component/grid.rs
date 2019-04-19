@@ -6,7 +6,11 @@ use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
 
 /// OSM Raster tile grid
 pub struct Grid {
+    // viewport
     vw: Viewport,
+    center: Px,
+    height: i32,
+    width: i32,
     // rows of tiles
     tile_rows: Vec<Vec<TileModel>>,
     // dom offset from parent
@@ -20,7 +24,7 @@ impl Grid {
     fn recalculate(&mut self, vw: &Viewport) {
         self.vw = vw.clone();
         self.tile_rows = Self::tile_rows(&vw);
-        self.tile_offset = Self::tile_offset(&vw);
+        self.tile_offset = Self::tile_offset(&vw, &self.center, self.height, self.width);
     }
 
     fn tile_rows(vw: &Viewport) -> Vec<Vec<TileModel>> {
@@ -33,10 +37,11 @@ impl Grid {
     }
 
     // returns pixel offset from viewport
-    fn tile_offset(vw: &Viewport) -> Px {
-        // inner div xy-offset
-        let first_tile = TileModel::from_lonlat(vw.lon_min, vw.lat_max, vw.z);
-        vw.pixel_offset(&first_tile)
+    fn tile_offset(vw: &Viewport, center: &Px, width: i32, height: i32) -> Px {
+        // take nw tile of viewport
+        let tile_px = TileModel::from_lonlat(vw.lon_min, vw.lat_max, vw.z).pixels();
+        // take distance to actual visible viewport
+        tile_px.distance(&center.translate(&(-width / 2, -height / 2).into()))
     }
 }
 
@@ -46,6 +51,9 @@ pub enum Msg {}
 pub struct Prop {
     pub vw: Viewport,
     pub layers: Vec<TileLayer>,
+    pub center: Px,
+    pub height: i32,
+    pub width: i32,
 }
 
 impl Component for Grid {
@@ -55,8 +63,11 @@ impl Component for Grid {
     fn create(prop: Self::Properties, _: ComponentLink<Self>) -> Self {
         Grid {
             tile_rows: Grid::tile_rows(&prop.vw),
-            tile_offset: Grid::tile_offset(&prop.vw),
+            tile_offset: Grid::tile_offset(&prop.vw, &prop.center, prop.height, prop.width),
             vw: prop.vw,
+            center: prop.center,
+            height: prop.height,
+            width: prop.width,
             layers: prop.layers,
         }
     }
@@ -68,6 +79,9 @@ impl Component for Grid {
     fn change(&mut self, prop: Self::Properties) -> ShouldRender {
         let mut changed = false;
         if self.vw != prop.vw {
+            self.center = prop.center;
+            self.width = prop.width;
+            self.height = prop.height;
             self.recalculate(&prop.vw);
             changed = true;
         }

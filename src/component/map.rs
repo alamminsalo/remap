@@ -224,7 +224,7 @@ impl Renderable<Map> for Map {
             let offset_px: Px = self.panning.offset().into();
             c = c.translate(&offset_px.neg());
         }
-        let vw = Viewport::new(&c.lonlat(self.zoom), (self.width, self.height), self.zoom);
+        let vw = Viewport::new(&c.lonlat(self.zoom), (self.width + 512, self.height + 512), self.zoom);
 
         // zoomlevel
         let z = self.zoom as i8;
@@ -244,7 +244,7 @@ impl Renderable<Map> for Map {
                     ondoubleclick=|e| Msg::Goto((e.offset_x(), e.offset_y()).into(), z + 1),
                     onmousemove=|e| Msg::Pan(e.screen_x() as f64, e.screen_y() as f64),>
                     // layer grids
-                    <Grid: vw=vw, layers=visible_layers, />
+                    <Grid: vw=vw, layers=visible_layers, center=c, height=self.height, width=self.width, />
                 </div>
             </div>
         }
