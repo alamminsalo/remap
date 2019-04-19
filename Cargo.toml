@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["alamminsalo <antti.lamminsalo@protonmail.com>"]
 edition = "2018"
 
+[profile.release]
+lto = true
+
 [dependencies]
 yew = "0.6.0"
 serde = "1.0.88"
