@@ -30,26 +30,27 @@ impl Viewport {
         }
     }
 
-    /// Translates by given pixel amount
-    pub fn translate(&self, xy: &Px) -> Viewport {
-        // translated pixels
-        let px: Px = self.pixels().translate(&xy);
-
-        // new nw lonlat
-        let nw = px.lonlat(self.z);
-
-        // diff along axises
-        let lon_d = self.lon_min - nw.lon;
-        let lat_d = self.lat_max - nw.lat;
-
-        Viewport {
-            lon_min: self.lon_min + lon_d,
-            lon_max: self.lon_max + lon_d,
-            lat_min: self.lat_min + lat_d,
-            lat_max: self.lat_max + lat_d,
-            z: self.z,
-        }
-    }
+    // TODO: fix this
+    //     /// Translates by given pixel amount
+    //     pub fn translate(&self, xy: &Px) -> Viewport {
+    //         // translated pixels
+    //         let px: Px = self.pixels().translate(&xy);
+    //
+    //         // new nw lonlat
+    //         let nw = px.lonlat(self.z);
+    //
+    //         // diff along axises
+    //         let lon_d = self.lon_min - nw.lon;
+    //         let lat_d = self.lat_max - nw.lat;
+    //
+    //         Viewport {
+    //             lon_min: self.lon_min + lon_d,
+    //             lon_max: self.lon_max + lon_d,
+    //             lat_min: self.lat_min + lat_d,
+    //             lat_max: self.lat_max + lat_d,
+    //             z: self.z,
+    //         }
+    //     }
 
     /// Returns center of this viewport
     pub fn center(&self) -> LonLat {
