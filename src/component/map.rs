@@ -38,6 +38,17 @@ pub struct Map {
 }
 
 impl Map {
+    /// Returns translated viewport based on offset
+    fn panned_viewport(&self, offset: Px) -> Viewport {
+        // calc new center
+        let center = self
+            .center
+            .px(self.zoom)
+            .translate(&offset.neg())
+            .lonlat(self.zoom);
+        // make new viewport from center
+        Viewport::new(&center, (self.width, self.height), self.zoom)
+    }
     fn finish_panning(&mut self) {
         // end movement
         let offset: Px = self.panning.end().into();
@@ -217,24 +228,27 @@ impl Component for Map {
 
 impl Renderable<Map> for Map {
     fn view(&self) -> Html<Self> {
-        // make viewports
-        let mut vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
-        let mut vw_outer: Viewport = vw.clone();
-
         // apply transforms when panning map
         // TODO: investigate if this impacts performance to do so many calculations on the view
         // function
-        if self.panning.status() != panning::Status::Idle {
+        let (vw, vw_outer) = if self.panning.status() != panning::Status::Idle {
+            // current panning offset
             let offset: Px = self.panning.offset().into();
-            vw = vw.translate(&offset);
+            // make new viewport from center
+            let vw = self.panned_viewport(offset);
             // resize outer viewport accordingly
             let mut adjust_amt = offset.neg().normalize(512);
             // multiply if panning fast, on steps of 35 vel
             let (vx, vy) = self.panning.velocity;
             adjust_amt.x *= (1.0 + vx.abs() / 35.0) as i64;
             adjust_amt.y *= (1.0 + vy.abs() / 35.0) as i64;
-            vw_outer = vw.resize_keep_min_bounds(adjust_amt);
-        }
+            (vw, vw.resize_keep_min_bounds(adjust_amt))
+        } else {
+            // make viewports
+            let vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
+            (vw, vw.clone())
+        };
+
         // zoomlevel
         let z = self.zoom as i8;
         // visible layers
