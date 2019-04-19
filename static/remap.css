@@ -1,5 +1,6 @@
 .remap-map {
   height: 100%;
+  overscroll-behavior: none;
 }
 
 .remap-zoom-controls {
