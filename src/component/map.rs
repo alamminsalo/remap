@@ -228,7 +228,12 @@ impl Renderable<Map> for Map {
             let offset: Px = self.panning.offset().into();
             vw = vw.translate(&offset);
             // resize outer viewport accordingly
-            vw_outer = vw.resize_keep_min_bounds(offset.neg().normalize(256));
+            let mut adjust_amt = offset.neg().normalize(512);
+            // multiply if panning fast, on steps of 35 vel
+            let (vx, vy) = self.panning.velocity;
+            adjust_amt.x *= (1.0 + vx.abs() / 35.0) as i64;
+            adjust_amt.y *= (1.0 + vy.abs() / 35.0) as i64;
+            vw_outer = vw.resize_keep_min_bounds(adjust_amt);
         }
         // zoomlevel
         let z = self.zoom as i8;

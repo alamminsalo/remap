@@ -10,7 +10,7 @@ pub struct State {
     /// position of movement
     position: (f64, f64),
     /// velocity of movement
-    velocity: (f64, f64),
+    pub velocity: (f64, f64),
     /// time, used for calculating velocity between last two movements
     time: f64,
 }
