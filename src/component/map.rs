@@ -37,6 +37,19 @@ pub struct Map {
     touchmove_handle: Option<EventListenerHandle>,
 }
 
+pub enum Msg {
+    Init,
+    Resize,
+    Noop,
+    Goto(Px, i8), // centers immediately to point with given zoom
+    Pan(f64, f64),
+    PanBegin(f64, f64),
+    PanRelease,
+    MoveEnd,
+    Decelerate(f64, f64),
+    Zoom(i8),
+}
+
 impl Map {
     /// Returns translated viewport based on offset
     fn panned_viewport(&self, offset: Px) -> Viewport {
@@ -80,19 +93,6 @@ impl Map {
             (vw, vw.clone())
         }
     }
-}
-
-pub enum Msg {
-    Init,
-    Resize,
-    Noop,
-    Goto(Px, i8), // centers immediately to point with given zoom
-    Pan(f64, f64),
-    PanBegin(f64, f64),
-    PanRelease,
-    MoveEnd,
-    Decelerate(f64, f64),
-    Zoom(i8),
 }
 
 impl Component for Map {
@@ -221,21 +221,25 @@ impl Component for Map {
                 true
             }
             Msg::Decelerate(t1, t0) => {
-                let dt = t1 - t0;
-                // console!(log, "decelerate", &dt);
-                self.panning.add_relative(self.inertia.tick(dt / 1e6));
-                match self.inertia.status() {
-                    inertia::Status::InProgress => {
-                        self.render_task = Some(self.render.request_animation_frame(
-                            self.link.send_back(move |t2| Msg::Decelerate(t2, t1)),
-                        ));
+                if self.panning.status() == panning::Status::Free {
+                    let dt = t1 - t0;
+                    // console!(log, "decelerate", &dt);
+                    self.panning.add_relative(self.inertia.tick(dt / 1e6));
+                    match self.inertia.status() {
+                        inertia::Status::InProgress => {
+                            self.render_task = Some(self.render.request_animation_frame(
+                                self.link.send_back(move |t2| Msg::Decelerate(t2, t1)),
+                            ));
+                        }
+                        inertia::Status::Ended => {
+                            self.render_task = None;
+                            self.link.send_self(Msg::MoveEnd);
+                        }
                     }
-                    inertia::Status::Ended => {
-                        self.render_task = None;
-                        self.link.send_self(Msg::MoveEnd);
-                    }
+                    true
+                } else {
+                    false
                 }
-                true
             }
             Msg::Zoom(z) => {
                 //console!(log, "zoom");
