@@ -166,7 +166,7 @@ impl Component for Input {
 impl Renderable<Input> for Input {
     fn view(&self) -> Html<Self> {
         html! {
-            <div class="remap-input",
+            <div id={&self.id}, class="remap-input",
                 onclick=|e| Msg::Click(e.offset_x(), e.offset_y()),
                 ondoubleclick=|e| Msg::DoubleClick(e.offset_x(), e.offset_y()),
                 onmousedown=|e| Msg::MoveBegin(e.screen_x() as f64, e.screen_y() as f64),
