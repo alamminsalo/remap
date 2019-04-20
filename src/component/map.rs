@@ -1,4 +1,4 @@
-use super::Grid;
+use super::{Grid, Input, InputEvent};
 use crate::model::position::{LonLat, Px};
 use crate::model::{TileLayer, Viewport};
 use crate::state::{inertia, layer, panning};
@@ -22,8 +22,12 @@ pub struct Map {
     id: String,
     center: LonLat,
     zoom: usize,
-    width: i32,  // element width in pixels
-    height: i32, // element height in pixels
+    // element width in pixels
+    width: i32,
+    // element height in pixels
+    height: i32,
+    // if set to some, indicates a map move in progress
+    movement: Option<Px>,
 
     // state handlers
     panning: panning::State,
@@ -31,28 +35,20 @@ pub struct Map {
     layers: layer::State,
 
     // dom callback handles
-    resize_handle: Option<EventListenerHandle>,
-    touchend_handle: Option<EventListenerHandle>,
-    touchstart_handle: Option<EventListenerHandle>,
-    touchmove_handle: Option<EventListenerHandle>,
+    handles: Vec<EventListenerHandle>,
 }
 
 pub enum Msg {
     Init,
     Resize,
-    Noop,
     Goto(Px, i8), // centers immediately to point with given zoom
-    Pan(f64, f64),
-    PanBegin(f64, f64),
-    PanRelease,
-    MoveEnd,
-    Decelerate(f64, f64),
     Zoom(i8),
+    Input(Px, InputEvent),
 }
 
 impl Map {
     /// Returns translated viewport based on offset
-    fn panned_viewport(&self, offset: Px) -> Viewport {
+    fn panned_viewport(&self, offset: &Px) -> Viewport {
         // calc new center
         let center = self
             .center
@@ -64,20 +60,19 @@ impl Map {
     }
     fn finish_panning(&mut self) {
         // end movement
-        let offset: Px = self.panning.end().into();
-        self.center = self
-            .center
-            .px(self.zoom)
-            .translate(&offset.neg())
-            .lonlat(self.zoom);
+        if let Some(offset) = self.movement.take() {
+            self.center = self
+                .center
+                .px(self.zoom)
+                .translate(&offset.neg())
+                .lonlat(self.zoom);
+        }
     }
     /// Calculates map grid viewports
     fn calc_viewports(&self) -> (Viewport, Viewport) {
         // TODO: investigate if this impacts performance to do so many calculations on the view
         // function
-        if self.panning.status() != panning::Status::Idle {
-            // current panning offset
-            let offset: Px = self.panning.offset().into();
+        if let Some(ref offset) = self.movement {
             // make new viewport from center
             let vw = self.panned_viewport(offset);
             // resize outer viewport accordingly
@@ -112,6 +107,7 @@ impl Component for Map {
             },
             height: 256,
             width: 256,
+            movement: None,
             zoom: 4,
             panning: Default::default(),
             inertia: Default::default(),
@@ -121,48 +117,17 @@ impl Component for Map {
                 "https://tile.thunderforest.com/neighbourhood",
                 ".png?apikey=9d61ff3f272b4bbaa7d9c0f63ad34177",
             )]),
-            // handlers empty at first
-            resize_handle: None,
-            touchend_handle: None,
-            touchstart_handle: None,
-            touchmove_handle: None,
+            handles: vec![],
         }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            Msg::Noop => false,
             Msg::Init => {
                 // make resize event handler
                 let cb = self.link.send_back(|_| Msg::Resize);
-                self.resize_handle =
-                    Some(window().add_event_listener(move |_: ResizeEvent| cb.emit(())));
-
-                // touch start
-                let cb = self.link.send_back(|e: TouchStart| {
-                    match e.target_touches().iter().next() {
-                        Some(touch) => Msg::PanBegin(touch.screen_x(), touch.screen_y()),
-                        _ => Msg::PanRelease, // may end panning if no touches found
-                    }
-                });
-                self.touchstart_handle =
-                    Some(window().add_event_listener(move |e: TouchStart| cb.emit(e)));
-
-                // touch end
-                let cb = self.link.send_back(|_| Msg::PanRelease);
-                self.touchend_handle =
-                    Some(window().add_event_listener(move |_: TouchEnd| cb.emit(())));
-
-                // touch move
-                let cb = self.link.send_back(|e: TouchMove| {
-                    match e.target_touches().iter().next() {
-                        Some(touch) => Msg::Pan(touch.screen_x(), touch.screen_y()),
-                        _ => Msg::PanRelease, // may end panning if no touches found
-                    }
-                });
-                self.touchmove_handle =
-                    Some(window().add_event_listener(move |e: TouchMove| cb.emit(e)));
-
+                self.handles
+                    .push(window().add_event_listener(move |_: ResizeEvent| cb.emit(())));
                 // send initial resize event
                 self.link.send_self(Msg::Resize);
                 // no need for immediate redraw
@@ -192,54 +157,25 @@ impl Component for Map {
                 self.link.send_self(Msg::Zoom(z));
                 true
             }
-            Msg::Pan(x, y) => {
-                if self.panning.status() == panning::Status::Panning {
-                    self.panning.set_position((x, y));
-                    true
-                } else {
-                    false
-                }
-            }
-            Msg::PanBegin(x, y) => {
-                if self.panning.status() != panning::Status::Idle {
-                    self.finish_panning();
-                }
-                self.panning.begin((x, y));
-                false
-            }
-            Msg::PanRelease => {
-                if self.panning.status() == panning::Status::Panning {
-                    self.inertia = inertia::State::begin(self.panning.release());
-                    let pn: f64 = js! { return performance.now(); }.try_into().unwrap_or(0.0);
-                    self.link.send_self(Msg::Decelerate(pn, pn));
-                }
-                true
-            }
-            Msg::MoveEnd => {
-                // console!(log, "move end");
-                self.finish_panning();
-                true
-            }
-            Msg::Decelerate(t1, t0) => {
-                if self.panning.status() == panning::Status::Free {
-                    let dt = t1 - t0;
-                    // console!(log, "decelerate", &dt);
-                    self.panning.add_relative(self.inertia.tick(dt / 1e6));
-                    match self.inertia.status() {
-                        inertia::Status::InProgress => {
-                            self.render_task = Some(self.render.request_animation_frame(
-                                self.link.send_back(move |t2| Msg::Decelerate(t2, t1)),
-                            ));
-                        }
-                        inertia::Status::Ended => {
-                            self.render_task = None;
-                            self.link.send_self(Msg::MoveEnd);
-                        }
+            Msg::Input(pos, e) => {
+                match e {
+                    InputEvent::Click => {
+                        // TODO
                     }
-                    true
-                } else {
-                    false
+                    InputEvent::DoubleClick => {
+                        self.link.send_self(Msg::Goto(pos, self.zoom as i8 + 1));
+                    }
+                    InputEvent::MoveBegin => {
+                        self.finish_panning();
+                    }
+                    InputEvent::Move => {
+                        self.movement = Some(pos);
+                    }
+                    InputEvent::MoveEnd => {
+                        self.finish_panning();
+                    }
                 }
+                true
             }
             Msg::Zoom(z) => {
                 //console!(log, "zoom");
@@ -263,19 +199,17 @@ impl Renderable<Map> for Map {
 
         html! {
             <div id={&self.id}, class="remap-map",>
+                // TODO: abstract
                 <div class="remap-zoom-controls",>
                     <i class="remap-control remap-control-zoom-in", onclick=|_| Msg::Zoom(z + 1),></i>
                     <i class="remap-control remap-control-zoom-out", onclick=|_| Msg::Zoom(z - 1),></i>
                 </div>
-                <div class="remap-viewport",
-                    onmousedown=|e| Msg::PanBegin(e.screen_x() as f64, e.screen_y() as f64),
-                    onmouseup=|_| Msg::PanRelease,
-                    onmouseleave=|_| Msg::PanRelease,
-                    ondoubleclick=|e| Msg::Goto((e.offset_x(), e.offset_y()).into(), z + 1),
-                    onmousemove=|e| Msg::Pan(e.screen_x() as f64, e.screen_y() as f64),>
-                    // layer grids
+                <div class="remap-viewport",>
+                    // tile grid
                     <Grid: vw=vw, vw_outer=vw_outer, layers=visible_layers, />
                 </div>
+                // input handling component
+                <Input: oninput=|(px,e)| Msg::Input(px,e), />
             </div>
         }
     }
