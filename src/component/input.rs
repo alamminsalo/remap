@@ -1,4 +1,4 @@
-use crate::model::position::Px;
+use crate::model::Px;
 use crate::state::{inertia, panning};
 use stdweb::unstable::TryInto;
 use stdweb::web::event::{ITouchEvent, TouchEnd, TouchMove, TouchStart};
@@ -150,6 +150,7 @@ impl Component for Input {
                 }
             }
             Msg::Stop => {
+                self.panning.end();
                 self.notify((0, 0).into(), InputEvent::MoveEnd);
             }
         };

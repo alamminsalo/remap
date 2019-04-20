@@ -1,5 +1,4 @@
-use super::position::{LonLat, Px};
-use super::Tile;
+use super::{LonLat, Px, Tile};
 
 // Viewport: boundingbox with zoom level
 // and useful transformation logic

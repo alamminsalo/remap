@@ -2,6 +2,7 @@ pub mod position;
 pub mod tile;
 pub mod viewport;
 
+pub use position::{LonLat, Px};
 pub use tile::{Tile, TileLayer};
 pub use viewport::Viewport;
 

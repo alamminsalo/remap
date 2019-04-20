@@ -1,39 +1,28 @@
 use super::{Grid, Input, InputEvent};
-use crate::model::position::{LonLat, Px};
-use crate::model::{TileLayer, Viewport};
-use crate::state::{inertia, layer, panning};
+use crate::model::{LonLat, Px, TileLayer, Viewport};
+use crate::state::layer;
 use stdweb::unstable::TryInto;
-use stdweb::web::event::{ITouchEvent, ResizeEvent, TouchEnd, TouchMove, TouchStart};
+use stdweb::web::event::ResizeEvent;
 use stdweb::web::{
     document, window, Element, EventListenerHandle, HtmlElement, IEventTarget, IHtmlElement,
     INonElementParentNode,
 };
 use uuid::Uuid;
-use yew::events::IMouseEvent;
-use yew::services::render::{RenderService, RenderTask};
 use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
 
 pub struct Map {
     link: ComponentLink<Self>,
-    render: RenderService,
-    render_task: Option<RenderTask>,
-
     // inner state variables
     id: String,
     center: LonLat,
     zoom: usize,
-    // element width in pixels
+    // element width, height in pixels
     width: i32,
-    // element height in pixels
     height: i32,
     // if set to some, indicates a map move in progress
     movement: Option<Px>,
-
     // state handlers
-    panning: panning::State,
-    inertia: inertia::State,
     layers: layer::State,
-
     // dom callback handles
     handles: Vec<EventListenerHandle>,
 }
@@ -76,12 +65,8 @@ impl Map {
             // make new viewport from center
             let vw = self.panned_viewport(offset);
             // resize outer viewport accordingly
-            let mut adjust_amt = offset.neg().normalize(512);
-            // multiply if panning fast, on steps of 35 vel
-            let (vx, vy) = self.panning.velocity;
-            adjust_amt.x *= (1.0 + vx.abs() / 35.0) as i64;
-            adjust_amt.y *= (1.0 + vy.abs() / 35.0) as i64;
-            (vw, vw.resize_keep_min_bounds(adjust_amt))
+            // adds +2 tiles per direction -> 2(x + y + 2) tiles
+            (vw, vw.resize_keep_min_bounds(offset.neg().normalize(512)))
         } else {
             // make viewports
             let vw = Viewport::new(&self.center, (self.width, self.height), self.zoom);
@@ -98,8 +83,6 @@ impl Component for Map {
         link.send_self(Msg::Init);
         Map {
             link: link,
-            render: RenderService::new(),
-            render_task: None,
             id: Uuid::new_v4().to_simple().to_string(),
             center: LonLat {
                 lon: 29.8,
@@ -109,8 +92,6 @@ impl Component for Map {
             width: 256,
             movement: None,
             zoom: 4,
-            panning: Default::default(),
-            inertia: Default::default(),
             // add single raster layer as default
             // TODO: parametrize
             layers: layer::State::new(vec![TileLayer::new(

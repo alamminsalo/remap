@@ -1,5 +1,4 @@
-use super::position::{LonLat, Px};
-use super::Viewport;
+use super::{LonLat, Px, Viewport};
 use std::f64::consts::PI;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
