@@ -1,6 +1,5 @@
 .remap-map {
   height: 100%;
-  overscroll-behavior: none;
 }
 
 .remap-zoom-controls {
@@ -47,4 +46,13 @@
   -webkit-user-drag: none;
   -webkit-user-select: none;
   -ms-user-select: none;
+}
+
+.remap-input {
+  overscroll-behavior: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
