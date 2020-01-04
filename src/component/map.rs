@@ -7,8 +7,7 @@ use stdweb::web::{
     document, window, Element, EventListenerHandle, HtmlElement, IEventTarget, IHtmlElement,
     INonElementParentNode,
 };
-use uuid::Uuid;
-use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
+use yew::{html, Component, ComponentLink, Html, ShouldRender};
 
 pub struct Map {
     link: ComponentLink<Self>,
@@ -83,7 +82,7 @@ impl Component for Map {
         link.send_self(Msg::Init);
         Map {
             link: link,
-            id: Uuid::new_v4().to_simple().to_string(),
+            id: String::from("remap_root"),
             center: LonLat {
                 lon: 29.8,
                 lat: 62.6,
@@ -167,9 +166,7 @@ impl Component for Map {
             }
         }
     }
-}
 
-impl Renderable<Map> for Map {
     fn view(&self) -> Html<Self> {
         // calc viewports
         let (vw, vw_outer) = self.calc_viewports();

@@ -1,5 +1,5 @@
 use crate::model::{Tile as TileModel, TileLayer};
-use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
+use yew::{html, Component, ComponentLink, Html, Properties, ShouldRender};
 
 pub struct Tile {
     tile: TileModel,
@@ -8,7 +8,7 @@ pub struct Tile {
 
 pub enum Msg {}
 
-#[derive(Default, PartialEq, Clone)]
+#[derive(Properties, Default, PartialEq, Clone)]
 pub struct Prop {
     pub tile: TileModel,
     pub layer: TileLayer,
@@ -36,9 +36,7 @@ impl Component for Tile {
         self.tile = props.tile;
         c
     }
-}
 
-impl Renderable<Tile> for Tile {
     fn view(&self) -> Html<Self> {
         html! {
             <span class="remap-tile", style={&format!("background-image: url({})",&self.layer.tile_url(&self.tile))}, />

@@ -1,12 +1,12 @@
 use crate::model::Px;
 use crate::state::{inertia, panning};
+use stdweb::js;
 use stdweb::unstable::TryInto;
 use stdweb::web::event::{ITouchEvent, TouchEnd, TouchMove, TouchStart};
 use stdweb::web::{document, EventListenerHandle, IEventTarget, INonElementParentNode};
-use uuid::Uuid;
 use yew::events::IMouseEvent;
 use yew::services::render::{RenderService, RenderTask};
-use yew::{html, Callback, Component, ComponentLink, Html, Renderable, ShouldRender};
+use yew::{html, Callback, Component, ComponentLink, Html, Properties, ShouldRender};
 
 pub enum InputEvent {
     Click,
@@ -42,7 +42,7 @@ pub enum Msg {
     Stop,
 }
 
-#[derive(Default, PartialEq, Clone)]
+#[derive(Properties, Default, PartialEq, Clone)]
 pub struct Prop {
     pub oninput: Option<Callback<(Px, InputEvent)>>,
 }
@@ -63,7 +63,7 @@ impl Component for Input {
     fn create(prop: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         link.send_self(Msg::Init);
         Self {
-            id: Uuid::new_v4().to_simple().to_string(),
+            id: String::from("remap_input"),
             link: link,
             oninput: prop.oninput,
             panning: Default::default(),
@@ -161,9 +161,7 @@ impl Component for Input {
         self.oninput = props.oninput;
         false
     }
-}
 
-impl Renderable<Input> for Input {
     fn view(&self) -> Html<Self> {
         html! {
             <div id={&self.id}, class="remap-input",

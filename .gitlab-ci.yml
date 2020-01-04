@@ -28,31 +28,22 @@ web:
       - static
 
 cargo_build:
-  image: rust:1.33
+  image: rust:1.39
   stage: build
   script:
     # compile rust
-    - cargo install cargo-web --quiet || true
-    - cargo web build --release
-    - mv target/wasm32-unknown-unknown/release/remap.js static
-    - mv target/wasm32-unknown-unknown/release/remap.wasm static
+    - cargo install wasm-pack --quiet || true
+    - cargo/bin/wasm-pack build -t web -d static/pkg
   artifacts:
     paths:
-      - static
+      - static/pkg
 
 pages:
   stage: deploy
   only: 
     - master
-  variables:
-    ACME_CHALLENGE: ''
-    ACME_FILE: 'noop'
   script:
-    # copy dist to public dir
-    - cp -r static public
-    # make acme challenge
-    - mkdir -p public/.well-known/acme-challenge/
-    - echo $ACME_CHALLENGE > public/.well-known/acme-challenge/$ACME_FILE
+    - mv static public
   artifacts:
     paths:
       - public
