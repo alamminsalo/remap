@@ -2,7 +2,7 @@ use crate::component::Tile;
 use crate::model::position::Px;
 use crate::model::{Tile as TileModel, TileLayer, Viewport};
 use itertools::Itertools;
-use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
+use yew::{html, Component, ComponentLink, Html, Properties, ShouldRender};
 
 /// OSM Raster tile grid
 pub struct Grid {
@@ -35,7 +35,7 @@ impl Grid {
 
 pub enum Msg {}
 
-#[derive(PartialEq, Clone, Default)]
+#[derive(Properties, PartialEq, Clone, Default)]
 pub struct Prop {
     pub vw: Viewport,
     pub vw_outer: Viewport,
@@ -71,9 +71,7 @@ impl Component for Grid {
         }
         changed
     }
-}
 
-impl Renderable<Grid> for Grid {
     fn view(&self) -> Html<Self> {
         let tile_rows = Grid::tile_rows(&self.vw_outer);
         let tile_offset = Grid::tile_offset(&self.vw, &self.vw_outer);
